@@ -18,7 +18,7 @@ impl GameCore {
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.star_handler.load(String::from("hygdata_v41.csv"))?;
+        self.star_handler.load(String::from("data/hygdata_v41.csv"))?;
         Ok(())
     }
 
@@ -28,7 +28,7 @@ impl GameCore {
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             GameEvent::Reload => { 
-                self.star_handler.load(String::from("hygdata_v41-reduced.csv"))?;
+                self.star_handler.load(String::from("data/hygdata_v41-reduced.csv"))?;
                 Ok(())
             }
             _ => { Ok(()) },
