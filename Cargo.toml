@@ -1,0 +1,14 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+csv = "1.4.0"
+imgui = "0.12.0"
+imgui-sdl3 = "0.5.2"
+kiddo = "5.3.0"
+log = { version = "0.4.29", features = ["max_level_info"] } 
+num-traits = "0.2.19"
+sdl3 = "0.17.3"
+serde = { version = "1.0.228", features = ["derive"] }
