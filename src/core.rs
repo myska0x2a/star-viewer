@@ -12,12 +12,14 @@ pub struct GameCore {
 
 impl GameCore {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        info!("Init game core");
         Ok(GameCore {
             star_handler: StarHandler::new(),
         })
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        info!("Loading game core");
         self.star_handler.load(String::from("data/hygdata_v41.csv"))?;
         Ok(())
     }

@@ -1,6 +1,7 @@
 use imgui::Ui;
 use crate::event::*;
 use sdl3::event::*;
+use log::info;
 
 struct StarSelectionWindow {
     nya: String,
@@ -12,6 +13,7 @@ pub struct GameUi {
 
 impl GameUi {
     pub fn new() -> Self {
+        info!("Init UI handler");
         GameUi { starselectionwindow: None }
     }
 

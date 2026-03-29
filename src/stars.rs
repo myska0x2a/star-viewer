@@ -1,7 +1,7 @@
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use serde::Deserialize;
 use std::io;
-use log::{info, warn};
+use log::{info, debug, warn, trace};
 
 
 pub const PARSEC_LY: f64 = 3.262;
@@ -22,7 +22,7 @@ pub struct Star {
 }
 
 impl Star {
-    // retreive optimal name
+    /// run through labels to find the most human name.
     pub fn name(&self) -> String {
         // common name
         if let Some(proper) = &self.proper {
@@ -48,12 +48,12 @@ impl Star {
         return String::from("Unnamed star");
     }
 
-    // returns the distance in parsecs
+    /// returns the distance in parsecs.
     pub fn dist(&self) -> f64 {
         return self.dist.clone();
     }
 
-    // returns the distance in light years
+    /// returns the distance in light-years.
     pub fn dist_ly(&self) -> f64 {
         return self.dist.clone() * PARSEC_LY;
     }
@@ -66,6 +66,7 @@ pub struct StarHandler {
 
 impl StarHandler {
     pub fn new() -> StarHandler {
+        info!("Init star handler");
         return StarHandler {
             stars: Vec::new(),
             tree: KdTree::new(),
@@ -74,7 +75,7 @@ impl StarHandler {
 
     // load the star data into the handler
     pub fn load(&mut self, path: String) -> Result<(), Box<dyn std::error::Error>> {
-        println!("StarHandler loading from {}", path);
+        trace!("StarHandler loading from {}", path);
         let mut stars: Vec<Star> = Vec::new();
         let mut tree = KdTree::new();
         let mut id: u32 = 0;
@@ -97,13 +98,11 @@ impl StarHandler {
     // return a list of references to all stars within a specified radius.
     // todo: add reference point (radius centre)
     pub fn get_nearby(&self, radius: f64) -> Vec<&Star> {
-        println!("Tree size: {}", self.tree.size());
-        println!("Vec size: {}", self.stars.len());
+        debug!("StarHandler retreiving nearby stars");
         let mut nearby = Vec::new();
         let within = self
             .tree
             .within::<SquaredEuclidean>(&[0f64, 0f64, 0f64], radius.powf(2.0));
-
 
         for neighbor in within {
             nearby.push(self.stars.get(neighbor.item as usize).unwrap());

@@ -5,6 +5,7 @@ use imgui::Ui;
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
+use log::info;
 
 struct ShaderData {
     color: [f32; 4],
@@ -30,6 +31,8 @@ pub struct GameRenderer {
 
 impl GameRenderer {
     pub fn init(sdl: &Sdl) -> Result<Self, Box<dyn std::error::Error>> {
+        info!("Init renderer");
+        
         let video_subsystem = sdl.video()?;
 
         // create a new window

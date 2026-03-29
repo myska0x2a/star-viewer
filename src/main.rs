@@ -5,8 +5,17 @@ use game::event::*;
 use game::rendering::*;
 use game::ui::*;
 use sdl3::event::*;
+use log::{debug, error, log_enabled, info, Level, trace};
+use env_logger::Env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // start logging
+    let env = Env::default()
+        .filter_or("LOG_LEVEL", "info")
+        .write_style_or("LOG_STYLE", "always");
+    env_logger::init_from_env(env); 
+
+
     let mut sdl = sdl3::init()?;
 
     let mut gamecore = GameCore::new()?;
@@ -34,6 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         
+        gamecore.get_star_handler().get_nearby(10.0);
 
         renderer.render(&mut sdl, gameui.render_ui(&ev_sendable))?; 
     }
