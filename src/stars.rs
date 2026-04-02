@@ -1,8 +1,7 @@
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
+use log::{debug, info, trace, warn};
 use serde::Deserialize;
 use std::io;
-use log::{info, debug, warn, trace};
-
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -75,12 +74,11 @@ impl StarHandler {
 
     // load the star data into the handler
     pub fn load(&mut self, path: String) -> Result<(), Box<dyn std::error::Error>> {
-        trace!("StarHandler loading from {}", path);
+        info!("StarHandler loading from {}", path);
         let mut stars: Vec<Star> = Vec::new();
         let mut tree = KdTree::new();
         let mut id: u32 = 0;
         let mut rdr = csv::Reader::from_path(path)?;
-
 
         for result in rdr.deserialize() {
             let star: Star = result?;

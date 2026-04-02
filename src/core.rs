@@ -2,25 +2,29 @@ use crate::event::*;
 use crate::rendering::GameRenderer;
 use crate::stars::*;
 use crate::util::*;
+use crate::fleet::*;
+use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
-use log::{info, warn};
 
 pub struct GameCore {
     star_handler: StarHandler,
+    fleet_handler: FleetHandler,
 }
 
 impl GameCore {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        info!("Init game core");
+        info!("Init game core...");
         Ok(GameCore {
             star_handler: StarHandler::new(),
+            fleet_handler: FleetHandler::new(),
         })
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Loading game core");
-        self.star_handler.load(String::from("data/hygdata_v41.csv"))?;
+        info!("Load game core...");
+        self.star_handler
+            .load(String::from("data/hygdata_v41.csv"))?;
         Ok(())
     }
 
@@ -29,15 +33,16 @@ impl GameCore {
         event: GameEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            GameEvent::Reload => { 
-                self.star_handler.load(String::from("data/hygdata_v41-reduced.csv"))?;
+            GameEvent::Reload => {
+                self.star_handler
+                    .load(String::from("data/hygdata_v41-reduced.csv"))?;
                 Ok(())
             }
-            _ => { Ok(()) },
+            _ => Ok(()),
         }
     }
 
     pub fn get_star_handler(&self) -> &StarHandler {
-        return &self.star_handler
+        return &self.star_handler;
     }
 }

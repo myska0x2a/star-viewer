@@ -1,11 +1,11 @@
 use crate::stars::*;
 use crate::util::GameUtils;
-use imgui_sdl3::ImGuiSdl3;
 use imgui::Ui;
+use imgui_sdl3::ImGuiSdl3;
+use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
-use log::info;
 
 struct ShaderData {
     color: [f32; 4],
@@ -32,10 +32,9 @@ pub struct GameRenderer {
 impl GameRenderer {
     pub fn init(sdl: &Sdl) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Init renderer");
-        
+
         let video_subsystem = sdl.video()?;
 
-        // create a new window
         let mut window = video_subsystem
             .window("Hello imgui-rs!", 1000, 1000)
             .position_centered()
@@ -46,11 +45,10 @@ impl GameRenderer {
         let device = Device::new(ShaderFormat::SPIRV, true)?.with_window(&mut window)?;
 
         let mut imgui = ImGuiSdl3::new(&device, &window, |ctx| {
-            // disable creation of files on disc
+            // disable creation of files
             ctx.set_ini_filename(None);
             ctx.set_log_filename(None);
 
-            // setup platform and renderer, and fonts to imgui
             ctx.fonts()
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
@@ -116,10 +114,18 @@ impl GameRenderer {
 
             command_buffer.submit()?;
         } else {
-            println!("Swapchain unavailable, cancel work");
+            error!("Renderer: swapchain unavailable.");
             command_buffer.cancel();
         }
 
+        Ok(())
+    }
+
+    pub fn close(self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut command_buffer = self.device.acquire_command_buffer()?;
+        command_buffer.cancel();
+        drop(command_buffer);
+        drop(self);
         Ok(())
     }
 }
@@ -134,7 +140,6 @@ fn render_triangle(
     let fs_source = include_bytes!("../shaders/triangle.frag.spv");
     let vs_source = include_bytes!("../shaders/triangle.vert.spv");
 
-    // Our shaders, require to be precompiled by a SPIR-V compiler beforehand
     let vs_shader = device
         .create_shader()
         .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)

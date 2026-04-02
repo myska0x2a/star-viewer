@@ -1,8 +1,8 @@
-use sdl3::event::*;
-use sdl3::gamepad::{ Gamepad } ;
-use sdl3::{ GamepadSubsystem, Sdl};
 use crate::event::*;
-use log::{debug, error, log_enabled, info, Level, trace};
+use log::{Level, debug, error, info, log_enabled, trace};
+use sdl3::event::*;
+use sdl3::gamepad::Gamepad;
+use sdl3::{GamepadSubsystem, Sdl};
 
 pub struct ControllerHandler {
     subsystem: GamepadSubsystem,
@@ -25,11 +25,16 @@ impl ControllerHandler {
             gamepad = Some(gamepad_subsystem.get(gamepad_id)?);
         }
 
-        return Ok(ControllerHandler { subsystem: gamepad_subsystem, controller: gamepad })
+        return Ok(ControllerHandler {
+            subsystem: gamepad_subsystem,
+            controller: gamepad,
+        });
     }
 
-    pub fn handle_event(&mut self, event: GameEvent) -> Result<(), Box<dyn std::error::Error>>{
-        if let GameEvent::StarSelected(text) = event.clone() && let Some(gamepad) = &mut self.controller {
+    pub fn handle_event(&mut self, event: GameEvent) -> Result<(), Box<dyn std::error::Error>> {
+        if let GameEvent::StarSelected(text) = event.clone()
+            && let Some(gamepad) = &mut self.controller
+        {
             info!("Star selected");
             gamepad.set_rumble(0, 6500, 100)?;
         }
@@ -37,5 +42,3 @@ impl ControllerHandler {
         Ok(())
     }
 }
-
-

@@ -1,27 +1,22 @@
-// #[allow(unused)]
-
 use game::core::GameCore;
 use game::event::*;
+use game::gamepad::*;
 use game::rendering::*;
 use game::ui::*;
-use game::gamepad::*;
 
+use env_logger::Env;
+use log::{Level, debug, error, info, log_enabled, trace};
 use sdl3::event::*;
 use sdl3::gamepad::Gamepad;
-use log::{debug, error, log_enabled, info, Level, trace};
-use env_logger::Env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // start logging
     let env = Env::default()
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
-    env_logger::init_from_env(env); 
-
+    env_logger::init_from_env(env);
 
     let mut sdl = sdl3::init()?;
-
-    // let mut controllerhandler = ControllerHandler::init(&sdl)?;
 
     let mut gamecore = GameCore::new()?;
     let mut renderer = GameRenderer::init(&sdl)?;
@@ -29,34 +24,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     gamecore.load()?;
 
-    
-
     let ev = sdl.event()?;
     ev.register_custom_event::<GameEvent>()?;
     let ev_sendable = ev.event_sender();
-
 
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
             renderer.handle_ui_event(&event);
 
             match event {
-                Event::Quit { .. } => { break 'main },
-                Event::User { .. } => { 
+                Event::Quit { .. } => {
+                    info!("Game closing.");
+                    renderer.close()?;
+                    break 'main;
+                }
+                Event::User { .. } => {
                     let event_user = event.as_user_event_type::<GameEvent>().unwrap();
-                    
+
                     // controllerhandler.handle_event(event_user.clone())?;
                     gamecore.handle_game_event(event_user.clone())?;
                     gameui.handle_game_event(event_user.clone())?;
-
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
-        
-        gamecore.get_star_handler().get_nearby(10.0);
 
-        renderer.render(&mut sdl, gameui.render_ui(&ev_sendable))?; 
+        renderer.render(&mut sdl, gameui.render_ui(&ev_sendable))?;
     }
 
     Ok(())

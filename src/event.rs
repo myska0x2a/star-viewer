@@ -7,4 +7,3 @@ pub enum GameEvent {
     StarSelected(String),
     Reload,
 }
-
