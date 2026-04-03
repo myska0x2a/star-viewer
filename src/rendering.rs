@@ -18,6 +18,7 @@ pub struct GameRenderer {
     imgui: ImGuiSdl3,
     triangle_pipeline: GraphicsPipeline,
     star_pipeline: GraphicsPipeline,
+    star_buffer: Buffer,
 }
 
 impl GameRenderer {
@@ -45,7 +46,7 @@ impl GameRenderer {
         });
 
         let triangle_pipeline = build_triangle_pipeline(&device, &window);
-        let star_pipeline = build_star_pipeline(&device, &window, star_handler)?;
+        let (star_pipeline, star_buffer) = build_star_pipeline(&device, &window, star_handler)?;
 
         return Ok(GameRenderer {
             window,
@@ -53,6 +54,7 @@ impl GameRenderer {
             imgui,
             triangle_pipeline,
             star_pipeline,
+            star_buffer,
         });
     }
 
@@ -67,7 +69,6 @@ impl GameRenderer {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event = sdl.event_pump()?;
         let event_pump = &mut event;
-
 
         let mut command_buffer = self.device.acquire_command_buffer()?;
 
@@ -92,12 +93,21 @@ impl GameRenderer {
 
             let shaderdata = TriangleUniforms::new(&color, &rotation, window_size);
 
-            render_triangle(
+            // render_triangle(
+            //     &self.device,
+            //     &command_buffer,
+            //     &color_targets,
+            //     &shaderdata,
+            //     &self.triangle_pipeline,
+            // );
+
+            render_stars(
                 &self.device,
+                &self.window,
                 &command_buffer,
-                &color_targets,
-                &shaderdata,
-                &self.triangle_pipeline,
+                &triangle_color_target,
+                &self.star_pipeline,
+                &self.star_buffer,
             );
 
             self.imgui.render(
@@ -141,7 +151,11 @@ impl From<&Star> for StarVertexData {
     fn from(star: &Star) -> StarVertexData {
         let position = [star.x as f32, star.y as f32, star.z as f32];
 
-        return StarVertexData { position, temperature: 2000.0, magnitude: 1.0 }
+        return StarVertexData {
+            position,
+            temperature: 2000.0,
+            magnitude: 1.0,
+        };
     }
 }
 
@@ -149,7 +163,7 @@ fn build_star_pipeline(
     device: &Device,
     window: &Window,
     star_handler: &StarHandler,
-) -> Result<GraphicsPipeline, Box<dyn std::error::Error>> {
+) -> Result<(GraphicsPipeline, Buffer), Box<dyn std::error::Error>> {
     let stars = star_handler.get_nearby(100.0);
     // leave 1000 as a comfortable margin.
     let max_stars = stars.len();
@@ -194,9 +208,7 @@ fn build_star_pipeline(
         );
         device.end_copy_pass(copy_pass);
         copy_cmd.submit()?;
-
-    } 
-
+    }
 
     let fs_source = include_bytes!("../shaders/stars/stars.frag.spv");
     let vs_source = include_bytes!("../shaders/stars/stars.vert.spv");
@@ -206,6 +218,7 @@ fn build_star_pipeline(
         .create_shader()
         .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
         .with_entrypoint(c"main")
+        .with_storage_buffers(1)
         .build()?;
 
     let fs_shader = device
@@ -236,7 +249,7 @@ fn build_star_pipeline(
     drop(vs_shader);
     drop(fs_shader);
 
-    return Ok(pipeline)
+    return Ok((pipeline, star_buffer));
 }
 
 fn render_stars(
@@ -244,12 +257,18 @@ fn render_stars(
     window: &Window,
     command_buffer: &CommandBuffer,
     color_targets: &[ColorTargetInfo; 1],
-    star_handler: &StarHandler,
+    pipeline: &GraphicsPipeline,
+    star_buffer: &Buffer,
 ) {
+    let render_pass = device
+        .begin_render_pass(&command_buffer, color_targets, None)
+        .unwrap();
+    render_pass.bind_graphics_pipeline(pipeline);
+    render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
 
-    // let stars = star_handler.get_stars();
+    render_pass.draw_primitives(3, 1, 0, 0);
+    device.end_render_pass(render_pass);
 }
-
 
 struct TriangleUniforms {
     color: [f32; 4],
@@ -266,7 +285,6 @@ impl TriangleUniforms {
         }
     }
 }
-
 
 fn build_triangle_pipeline(device: &Device, window: &Window) -> GraphicsPipeline {
     let fs_source = include_bytes!("../shaders/triangle/triangle.frag.spv");
