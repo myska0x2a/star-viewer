@@ -33,10 +33,11 @@ pub struct GameRenderer {
     device: Device,
     imgui: ImGuiSdl3,
     triangle_pipeline: GraphicsPipeline,
+    star_pipeline: GraphicsPipeline,
 }
 
 impl GameRenderer {
-    pub fn init(sdl: &Sdl) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn init(sdl: &Sdl, star_handler: &StarHandler) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Init renderer");
 
         let video_subsystem = sdl.video()?;
@@ -60,12 +61,14 @@ impl GameRenderer {
         });
 
         let triangle_pipeline = build_triangle_pipeline(&device, &window);
+        let star_pipeline = build_star_pipeline(&device, &window, star_handler)?;
 
         return Ok(GameRenderer {
             window,
             device,
             imgui,
             triangle_pipeline,
+            star_pipeline,
         });
     }
 
@@ -149,13 +152,28 @@ struct StarVertexData {
     magnitude: f32,
 }
 
+impl From<&Star> for StarVertexData {
+    fn from(star: &Star) -> StarVertexData {
+        let position = [star.x as f32, star.y as f32, star.z as f32];
+
+        return StarVertexData { position, temperature: 2000.0, magnitude: 1.0 }
+    }
+}
+
 fn build_star_pipeline(
     device: &Device,
     window: &Window,
     star_handler: &StarHandler,
 ) -> Result<GraphicsPipeline, Box<dyn std::error::Error>> {
+    let stars = star_handler.get_nearby(100.0);
     // leave 1000 as a comfortable margin.
-    let max_stars = star_handler.get_stars().len() + 1000;
+    let max_stars = stars.len();
+
+    let mut star_data: Vec<StarVertexData> = Vec::new();
+
+    for star in stars {
+        star_data.push(StarVertexData::from(star));
+    }
 
     let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
 
@@ -166,26 +184,56 @@ fn build_star_pipeline(
         .with_usage(BufferUsageFlags::COMPUTE_STORAGE_WRITE)
         .build()?;
 
-    let fs_source = include_bytes!("../shaders/stars/stars.vert.spv");
-    let vs_source = include_bytes!("../shaders/stars/stars.frag.spv");
+    let upload = device
+        .create_transfer_buffer()
+        .with_size(buffer_size)
+        .with_usage(TransferBufferUsage::UPLOAD)
+        .build()?;
 
+    {
+        let mut map = upload.map::<StarVertexData>(&device, true);
+        map.mem_mut().copy_from_slice(&star_data);
+        map.unmap();
+
+        let copy_cmd = device.acquire_command_buffer()?;
+        let copy_pass = device.begin_copy_pass(&copy_cmd)?;
+        copy_pass.upload_to_gpu_buffer(
+            TransferBufferLocation::new()
+                .with_offset(0)
+                .with_transfer_buffer(&upload),
+            BufferRegion::new()
+                .with_offset(0)
+                .with_size(buffer_size)
+                .with_buffer(&star_buffer),
+            true,
+        );
+        device.end_copy_pass(copy_pass);
+        copy_cmd.submit()?;
+
+    } 
+
+
+    let fs_source = include_bytes!("../shaders/stars/stars.frag.spv");
+    let vs_source = include_bytes!("../shaders/stars/stars.vert.spv");
+
+    // Our shaders, require to be precompiled by a SPIR-V compiler beforehand
     let vs_shader = device
         .create_shader()
         .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
         .with_entrypoint(c"main")
-        .with_uniform_buffers(1)
-        .build()
-        .unwrap();
+        .build()?;
 
     let fs_shader = device
         .create_shader()
         .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
         .with_entrypoint(c"main")
-        .build()
-        .unwrap();
+        .build()?;
 
     let swapchain_format = device.get_swapchain_texture_format(&window);
 
+    // Create a pipeline, we specify that we want our target format in the one of the swapchain
+    // since we are rendering directly unto the swapchain, however, we could specify one that
+    // is different from the swapchain (i.e offscreen rendering)
     let pipeline = device
         .create_graphics_pipeline()
         .with_fragment_shader(&fs_shader)
@@ -197,13 +245,13 @@ fn build_star_pipeline(
                 ColorTargetDescription::new().with_format(swapchain_format),
             ]),
         )
-        .build()
-        .unwrap();
+        .build()?;
 
+    // The pipeline now holds copies of our shaders, so we can release them
     drop(vs_shader);
     drop(fs_shader);
 
-    return Ok(pipeline);
+    return Ok(pipeline)
 }
 
 fn render_stars(

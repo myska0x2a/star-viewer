@@ -19,10 +19,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut sdl = sdl3::init()?;
 
     let mut gamecore = GameCore::new()?;
-    let mut renderer = GameRenderer::init(&sdl)?;
     let mut gameui = GameUi::new();
 
     gamecore.load()?;
+
+    let mut renderer = GameRenderer::init(&sdl, gamecore.get_star_handler())?;
 
     let ev = sdl.event()?;
     ev.register_custom_event::<GameEvent>()?;
