@@ -16,7 +16,6 @@ pub struct GameRenderer {
     window: Window,
     device: Device,
     imgui: ImGuiSdl3,
-    triangle_pipeline: GraphicsPipeline,
     star_pipeline: GraphicsPipeline,
     star_buffer: Buffer,
 }
@@ -45,14 +44,12 @@ impl GameRenderer {
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
 
-        let triangle_pipeline = build_triangle_pipeline(&device, &window);
         let (star_pipeline, star_buffer) = build_star_pipeline(&device, &window, star_handler)?;
 
         return Ok(GameRenderer {
             window,
             device,
             imgui,
-            triangle_pipeline,
             star_pipeline,
             star_buffer,
         });
@@ -87,19 +84,6 @@ impl GameRenderer {
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(0, 0, 0))];
 
-            let rotation: f32 = 2.0;
-            let color: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-            let window_size: [f32; 2] = [self.window.size().0 as f32, self.window.size().1 as f32];
-
-            let shaderdata = TriangleUniforms::new(&color, &rotation, window_size);
-
-            // render_triangle(
-            //     &self.device,
-            //     &command_buffer,
-            //     &color_targets,
-            //     &shaderdata,
-            //     &self.triangle_pipeline,
-            // );
 
             render_stars(
                 &self.device,
@@ -229,9 +213,6 @@ fn build_star_pipeline(
 
     let swapchain_format = device.get_swapchain_texture_format(&window);
 
-    // Create a pipeline, we specify that we want our target format in the one of the swapchain
-    // since we are rendering directly unto the swapchain, however, we could specify one that
-    // is different from the swapchain (i.e offscreen rendering)
     let pipeline = device
         .create_graphics_pipeline()
         .with_fragment_shader(&fs_shader)
@@ -245,7 +226,6 @@ fn build_star_pipeline(
         )
         .build()?;
 
-    // The pipeline now holds copies of our shaders, so we can release them
     drop(vs_shader);
     drop(fs_shader);
 
@@ -263,87 +243,14 @@ fn render_stars(
     let render_pass = device
         .begin_render_pass(&command_buffer, color_targets, None)
         .unwrap();
+
     render_pass.bind_graphics_pipeline(pipeline);
     render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
-
     render_pass.draw_primitives(3, 1, 0, 0);
+
     device.end_render_pass(render_pass);
 }
 
-struct TriangleUniforms {
-    color: [f32; 4],
-    rotation: f32,
-    resolution: [f32; 2],
-}
-
-impl TriangleUniforms {
-    fn new(color: &[f32; 4], rotation: &f32, resolution: [f32; 2]) -> Self {
-        TriangleUniforms {
-            color: color.clone(),
-            rotation: rotation.clone(),
-            resolution: resolution,
-        }
-    }
-}
-
-fn build_triangle_pipeline(device: &Device, window: &Window) -> GraphicsPipeline {
-    let fs_source = include_bytes!("../shaders/triangle/triangle.frag.spv");
-    let vs_source = include_bytes!("../shaders/triangle/triangle.vert.spv");
-
-    let vs_shader = device
-        .create_shader()
-        .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
-        .with_entrypoint(c"main")
-        .with_uniform_buffers(1)
-        .build()
-        .unwrap();
-
-    let fs_shader = device
-        .create_shader()
-        .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
-        .with_entrypoint(c"main")
-        .build()
-        .unwrap();
-
-    let swapchain_format = device.get_swapchain_texture_format(&window);
-
-    let pipeline = device
-        .create_graphics_pipeline()
-        .with_fragment_shader(&fs_shader)
-        .with_vertex_shader(&vs_shader)
-        .with_primitive_type(PrimitiveType::TriangleList)
-        .with_fill_mode(FillMode::Fill)
-        .with_target_info(
-            GraphicsPipelineTargetInfo::new().with_color_target_descriptions(&[
-                ColorTargetDescription::new().with_format(swapchain_format),
-            ]),
-        )
-        .build()
-        .unwrap();
-
-    drop(vs_shader);
-    drop(fs_shader);
-
-    return pipeline;
-}
-
-fn render_triangle(
-    device: &Device,
-    command_buffer: &CommandBuffer,
-    color_targets: &[ColorTargetInfo; 1],
-    data: &TriangleUniforms,
-    pipeline: &GraphicsPipeline,
-) {
-    let render_pass = device
-        .begin_render_pass(&command_buffer, color_targets, None)
-        .unwrap();
-    render_pass.bind_graphics_pipeline(&pipeline);
-
-    command_buffer.push_vertex_uniform_data(0, data);
-
-    render_pass.draw_primitives(3, 1, 0, 0);
-    device.end_render_pass(render_pass);
-}
 
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
 fn create_buffer_with_data<T: Copy>(
