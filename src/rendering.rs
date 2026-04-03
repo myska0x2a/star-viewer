@@ -7,22 +7,6 @@ use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
 
-struct ShaderData {
-    color: [f32; 4],
-    rotation: f32,
-    resolution: [f32; 2],
-}
-
-impl ShaderData {
-    fn new(color: &[f32; 4], rotation: &f32, resolution: [f32; 2]) -> Self {
-        ShaderData {
-            color: color.clone(),
-            rotation: rotation.clone(),
-            resolution: resolution,
-        }
-    }
-}
-
 struct Camera {
     pos: [f64; 3],
     orientation: [f64; 3],
@@ -84,9 +68,6 @@ impl GameRenderer {
         let mut event = sdl.event_pump()?;
         let event_pump = &mut event;
 
-        let mut rotation: f32 = 2.0;
-        let mut color: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-        let mut window_size: [f32; 2] = [self.window.size().0 as f32, self.window.size().1 as f32];
 
         let mut command_buffer = self.device.acquire_command_buffer()?;
 
@@ -105,7 +86,11 @@ impl GameRenderer {
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(0, 0, 0))];
 
-            let shaderdata = ShaderData::new(&color, &rotation, window_size);
+            let rotation: f32 = 2.0;
+            let color: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+            let window_size: [f32; 2] = [self.window.size().0 as f32, self.window.size().1 as f32];
+
+            let shaderdata = TriangleUniforms::new(&color, &rotation, window_size);
 
             render_triangle(
                 &self.device,
@@ -265,6 +250,24 @@ fn render_stars(
     // let stars = star_handler.get_stars();
 }
 
+
+struct TriangleUniforms {
+    color: [f32; 4],
+    rotation: f32,
+    resolution: [f32; 2],
+}
+
+impl TriangleUniforms {
+    fn new(color: &[f32; 4], rotation: &f32, resolution: [f32; 2]) -> Self {
+        TriangleUniforms {
+            color: color.clone(),
+            rotation: rotation.clone(),
+            resolution: resolution,
+        }
+    }
+}
+
+
 fn build_triangle_pipeline(device: &Device, window: &Window) -> GraphicsPipeline {
     let fs_source = include_bytes!("../shaders/triangle/triangle.frag.spv");
     let vs_source = include_bytes!("../shaders/triangle/triangle.vert.spv");
@@ -310,7 +313,7 @@ fn render_triangle(
     device: &Device,
     command_buffer: &CommandBuffer,
     color_targets: &[ColorTargetInfo; 1],
-    data: &ShaderData,
+    data: &TriangleUniforms,
     pipeline: &GraphicsPipeline,
 ) {
     let render_pass = device
@@ -342,23 +345,14 @@ fn create_buffer_with_data<T: Copy>(
         .with_usage(usage)
         .build()?;
 
-    // Map the transfer buffer's memory into a place we can copy into, and copy the data
-    //
-    // Note: We set `cycle` to true since we're reusing the same transfer buffer to
-    // initialize both the vertex and index buffer. This makes SDL synchronize the transfers
-    // so that one doesn't interfere with the other.
     let mut map = transfer_buffer.map::<T>(gpu, true);
     let mem = map.mem_mut();
     for (index, &value) in data.iter().enumerate() {
         mem[index] = value;
     }
 
-    // Now unmap the memory since we're done copying
     map.unmap();
 
-    // Finally, add a command to the copy pass to upload this data to the GPU
-    //
-    // Note: We also set `cycle` to true here for the same reason.
     copy_pass.upload_to_gpu_buffer(
         TransferBufferLocation::new()
             .with_offset(0)
