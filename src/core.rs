@@ -1,15 +1,15 @@
 use crate::event::*;
+use crate::fleet::*;
 use crate::rendering::GameRenderer;
 use crate::stars::*;
 use crate::util::*;
-use crate::fleet::*;
 use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
 
 pub struct GameCore {
-    star_handler: StarHandler,
-    fleet_handler: FleetHandler,
+    pub star_handler: StarHandler,
+    pub fleet_handler: FleetHandler,
 }
 
 impl GameCore {

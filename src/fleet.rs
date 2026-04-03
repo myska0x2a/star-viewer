@@ -8,7 +8,7 @@ pub struct Ship {
 
 impl Ship {
     pub fn new(name: String) -> Self {
-        return Ship { name: name }
+        return Ship { name: name };
     }
 }
 
@@ -26,14 +26,20 @@ impl Expedition {
         let ship = Ship::new(String::from("Leonara Christine"));
         let mut ships = Vec::new();
         ships.push(ship);
-        
-        return Expedition { ships, origin: String::from("Sol"), destination: String::from("Beta Three"), journey_distance: 22.3, journey_completion: 12.1 }
+
+        return Expedition {
+            ships,
+            origin: String::from("Sol"),
+            destination: String::from("Beta Three"),
+            journey_distance: 22.3,
+            journey_completion: 12.1,
+        };
     }
 }
 
 /// Handles and updates the state of all ships in flight.
 pub struct FleetHandler {
-    fleet: Vec<Expedition>
+    fleet: Vec<Expedition>,
 }
 
 impl FleetHandler {
@@ -41,6 +47,6 @@ impl FleetHandler {
         info!("Init fleet handler");
         let mut fleet = Vec::new();
         fleet.push(Expedition::new());
-        return FleetHandler { fleet: fleet }
+        return FleetHandler { fleet: fleet };
     }
 }

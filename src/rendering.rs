@@ -23,10 +23,16 @@ impl ShaderData {
     }
 }
 
+struct Camera {
+    pos: [f64; 3],
+    orientation: [f64; 3],
+}
+
 pub struct GameRenderer {
     window: Window,
     device: Device,
     imgui: ImGuiSdl3,
+    triangle_pipeline: GraphicsPipeline,
 }
 
 impl GameRenderer {
@@ -53,10 +59,13 @@ impl GameRenderer {
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
 
+        let triangle_pipeline = build_triangle_pipeline(&device, &window);
+
         return Ok(GameRenderer {
             window,
             device,
             imgui,
+            triangle_pipeline,
         });
     }
 
@@ -94,12 +103,13 @@ impl GameRenderer {
                 .with_clear_color(Color::RGB(0, 0, 0))];
 
             let shaderdata = ShaderData::new(&color, &rotation, window_size);
+
             render_triangle(
                 &self.device,
-                &self.window,
                 &command_buffer,
                 &color_targets,
                 &shaderdata,
+                &self.triangle_pipeline,
             );
 
             self.imgui.render(
@@ -130,15 +140,34 @@ impl GameRenderer {
     }
 }
 
-fn render_triangle(
+// data to be passed to the shader.
+#[repr(packed)]
+#[derive(Copy, Clone)]
+struct StarVertexData {
+    position: [f32; 3],
+    temperature: f32,
+    magnitude: f32,
+}
+
+fn build_star_pipeline(
     device: &Device,
     window: &Window,
-    command_buffer: &CommandBuffer,
-    color_targets: &[ColorTargetInfo; 1],
-    data: &ShaderData,
-) {
-    let fs_source = include_bytes!("../shaders/triangle.frag.spv");
-    let vs_source = include_bytes!("../shaders/triangle.vert.spv");
+    star_handler: &StarHandler,
+) -> Result<GraphicsPipeline, Box<dyn std::error::Error>> {
+    // leave 1000 as a comfortable margin.
+    let max_stars = star_handler.get_stars().len() + 1000;
+
+    let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
+
+    // buffer which stores the stars
+    let star_buffer = device
+        .create_buffer()
+        .with_size(buffer_size)
+        .with_usage(BufferUsageFlags::COMPUTE_STORAGE_WRITE)
+        .build()?;
+
+    let fs_source = include_bytes!("../shaders/stars/stars.vert.spv");
+    let vs_source = include_bytes!("../shaders/stars/stars.frag.spv");
 
     let vs_shader = device
         .create_shader()
@@ -174,6 +203,68 @@ fn render_triangle(
     drop(vs_shader);
     drop(fs_shader);
 
+    return Ok(pipeline);
+}
+
+fn render_stars(
+    device: &Device,
+    window: &Window,
+    command_buffer: &CommandBuffer,
+    color_targets: &[ColorTargetInfo; 1],
+    star_handler: &StarHandler,
+) {
+
+    // let stars = star_handler.get_stars();
+}
+
+fn build_triangle_pipeline(device: &Device, window: &Window) -> GraphicsPipeline {
+    let fs_source = include_bytes!("../shaders/triangle/triangle.frag.spv");
+    let vs_source = include_bytes!("../shaders/triangle/triangle.vert.spv");
+
+    let vs_shader = device
+        .create_shader()
+        .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
+        .with_entrypoint(c"main")
+        .with_uniform_buffers(1)
+        .build()
+        .unwrap();
+
+    let fs_shader = device
+        .create_shader()
+        .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
+        .with_entrypoint(c"main")
+        .build()
+        .unwrap();
+
+    let swapchain_format = device.get_swapchain_texture_format(&window);
+
+    let pipeline = device
+        .create_graphics_pipeline()
+        .with_fragment_shader(&fs_shader)
+        .with_vertex_shader(&vs_shader)
+        .with_primitive_type(PrimitiveType::TriangleList)
+        .with_fill_mode(FillMode::Fill)
+        .with_target_info(
+            GraphicsPipelineTargetInfo::new().with_color_target_descriptions(&[
+                ColorTargetDescription::new().with_format(swapchain_format),
+            ]),
+        )
+        .build()
+        .unwrap();
+
+    drop(vs_shader);
+    drop(fs_shader);
+
+    return pipeline;
+}
+
+fn render_triangle(
+    device: &Device,
+    command_buffer: &CommandBuffer,
+    color_targets: &[ColorTargetInfo; 1],
+    data: &ShaderData,
+    pipeline: &GraphicsPipeline,
+) {
     let render_pass = device
         .begin_render_pass(&command_buffer, color_targets, None)
         .unwrap();
@@ -183,4 +274,53 @@ fn render_triangle(
 
     render_pass.draw_primitives(3, 1, 0, 0);
     device.end_render_pass(render_pass);
+}
+
+// https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
+fn create_buffer_with_data<T: Copy>(
+    gpu: &Device,
+    transfer_buffer: &TransferBuffer,
+    copy_pass: &CopyPass,
+    usage: BufferUsageFlags,
+    data: &[T],
+) -> Result<Buffer, Box<dyn std::error::Error>> {
+    // Figure out the length of the data in bytes
+    let len_bytes = std::mem::size_of_val(data);
+
+    // Create the buffer with the size and usage we want
+    let buffer = gpu
+        .create_buffer()
+        .with_size(len_bytes as u32)
+        .with_usage(usage)
+        .build()?;
+
+    // Map the transfer buffer's memory into a place we can copy into, and copy the data
+    //
+    // Note: We set `cycle` to true since we're reusing the same transfer buffer to
+    // initialize both the vertex and index buffer. This makes SDL synchronize the transfers
+    // so that one doesn't interfere with the other.
+    let mut map = transfer_buffer.map::<T>(gpu, true);
+    let mem = map.mem_mut();
+    for (index, &value) in data.iter().enumerate() {
+        mem[index] = value;
+    }
+
+    // Now unmap the memory since we're done copying
+    map.unmap();
+
+    // Finally, add a command to the copy pass to upload this data to the GPU
+    //
+    // Note: We also set `cycle` to true here for the same reason.
+    copy_pass.upload_to_gpu_buffer(
+        TransferBufferLocation::new()
+            .with_offset(0)
+            .with_transfer_buffer(transfer_buffer),
+        BufferRegion::new()
+            .with_offset(0)
+            .with_size(len_bytes as u32)
+            .with_buffer(&buffer),
+        true,
+    );
+
+    Ok(buffer)
 }
