@@ -137,7 +137,7 @@ impl From<&Star> for StarVertexData {
 
         return StarVertexData {
             position,
-            temperature: 2000.0,
+            temperature: 0.3,
             magnitude: 1.0,
         };
     }
@@ -149,7 +149,7 @@ fn build_star_pipeline(
     star_handler: &StarHandler,
 ) -> Result<(GraphicsPipeline, Buffer), Box<dyn std::error::Error>> {
     let stars = star_handler.get_nearby(10.0);
-    // leave 1000 as a comfortable margin.
+
     let max_stars = stars.len();
 
     let mut star_data: Vec<StarVertexData> = Vec::new();
@@ -198,7 +198,6 @@ fn build_star_pipeline(
     let fs_source = include_bytes!("../shaders/stars/stars.frag.spv");
     let vs_source = include_bytes!("../shaders/stars/stars.vert.spv");
 
-    // Our shaders, require to be precompiled by a SPIR-V compiler beforehand
     let vs_shader = device
         .create_shader()
         .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
@@ -247,7 +246,7 @@ fn render_stars(
 
     render_pass.bind_graphics_pipeline(pipeline);
     render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
-    render_pass.draw_primitives(20, 60, 0, 0);
+    render_pass.draw_primitives(3, 1, 0, 0);
 
     device.end_render_pass(render_pass);
 }
