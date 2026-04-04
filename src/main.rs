@@ -29,6 +29,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ev.register_custom_event::<GameEvent>()?;
     let ev_sendable = ev.event_sender();
 
+    let mut position: f64;
+
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
             renderer.handle_ui_event(&event);
@@ -45,6 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // controllerhandler.handle_event(event_user.clone())?;
                     gamecore.handle_game_event(event_user.clone())?;
                     gameui.handle_game_event(event_user.clone())?;
+                    renderer.handle_game_event(event_user.clone())?;
                 }
                 _ => {}
             }

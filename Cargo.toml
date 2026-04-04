@@ -15,3 +15,4 @@ num-traits = "0.2.19"
 rand = "0.10.0"
 sdl3 = "0.17.3"
 serde = { version = "1.0.228", features = ["derive"] }
+std140 = "0.2.7"

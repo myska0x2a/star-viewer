@@ -1,12 +1,13 @@
 use crate::stars::*;
 use crate::util::GameUtils;
+use crate::event::*;
+use cgmath::{PerspectiveFov, Rad, Matrix4};
 use imgui::Ui;
 use imgui_sdl3::ImGuiSdl3;
 use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
-use cgmath::{ PerspectiveFov, Rad };
 
 struct Camera {
     pos: [f64; 3],
@@ -19,6 +20,8 @@ pub struct GameRenderer {
     imgui: ImGuiSdl3,
     star_pipeline: GraphicsPipeline,
     star_buffer: Buffer,
+    num_stars: usize,
+    position: f32,
 }
 
 impl GameRenderer {
@@ -28,7 +31,8 @@ impl GameRenderer {
         let video_subsystem = sdl.video()?;
 
         let mut window = video_subsystem
-            .window("Hello imgui-rs!", 1000, 1000)
+            .window("Hello imgui-rs!", 1920, 1200)
+            .fullscreen()
             .position_centered()
             .resizable()
             .build()
@@ -45,7 +49,8 @@ impl GameRenderer {
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
 
-        let (star_pipeline, star_buffer) = build_star_pipeline(&device, &window, star_handler)?;
+        let (star_pipeline, star_buffer, num_stars) =
+            build_star_pipeline(&device, &window, star_handler)?;
 
         return Ok(GameRenderer {
             window,
@@ -53,11 +58,26 @@ impl GameRenderer {
             imgui,
             star_pipeline,
             star_buffer,
+            num_stars,
+            position: 0.0,
         });
     }
 
     pub fn handle_ui_event(&mut self, event: &Event) {
         self.imgui.handle_event(&event);
+    }
+
+    pub fn handle_game_event(
+        &mut self,
+        event: GameEvent,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match event {
+            GameEvent::PositionChanged(position) => {
+                self.position = position;
+                Ok(())
+            }
+            _ => Ok(()),
+        }
     }
 
     pub fn render(
@@ -85,7 +105,6 @@ impl GameRenderer {
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(0, 0, 0))];
 
-
             render_stars(
                 &self.device,
                 &self.window,
@@ -93,6 +112,8 @@ impl GameRenderer {
                 &triangle_color_target,
                 &self.star_pipeline,
                 &self.star_buffer,
+                self.num_stars,
+                self.position,
             );
 
             self.imgui.render(
@@ -148,8 +169,9 @@ fn build_star_pipeline(
     device: &Device,
     window: &Window,
     star_handler: &StarHandler,
-) -> Result<(GraphicsPipeline, Buffer), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(10.0);
+) -> Result<(GraphicsPipeline, Buffer, usize), Box<dyn std::error::Error>> {
+    let stars = star_handler.get_nearby(20.0);
+    // let stars = star_handler.get_stars();
 
     let max_stars = stars.len();
 
@@ -157,7 +179,7 @@ fn build_star_pipeline(
 
     for star in stars {
         star_data.push(StarVertexData::from(star));
-        println!("{}", star.name());
+        println!("{}: {:?}", star.name(), (star.x, star.y, star.z));
     }
 
     let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
@@ -231,7 +253,7 @@ fn build_star_pipeline(
     drop(vs_shader);
     drop(fs_shader);
 
-    return Ok((pipeline, star_buffer));
+    return Ok((pipeline, star_buffer, max_stars));
 }
 
 fn render_stars(
@@ -241,13 +263,27 @@ fn render_stars(
     color_targets: &[ColorTargetInfo; 1],
     pipeline: &GraphicsPipeline,
     star_buffer: &Buffer,
+    num_stars: usize,
+    position: f32,
 ) {
-    let rotation = Rad(30.0);
+    #[repr(align(16))]
+    #[derive(Copy, Clone)]
+    struct UniformData {
+        projection_matrix: Matrix4<f32>,
+        position: [f32; 3],
+    }
+
+    let rotation = Rad(3.0);
     let projection_matrix = PerspectiveFov {
         fovy: rotation,
-        aspect: 1.7,
-        near: 1.0,
-        far: 3.0,
+        aspect: 1.778,
+        near: 0.1,
+        far: 300.0,
+    };
+
+    let uniform_data = UniformData {
+        projection_matrix: Matrix4::from(projection_matrix),
+        position: [position, 0.0, 0.0],
     };
 
     let render_pass = device
@@ -256,12 +292,11 @@ fn render_stars(
 
     render_pass.bind_graphics_pipeline(pipeline);
     render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
-    command_buffer.push_vertex_uniform_data(0, &projection_matrix);
-    render_pass.draw_primitives(3, 1, 0, 0);
+    command_buffer.push_vertex_uniform_data(0, &uniform_data);
+    render_pass.draw_primitives(num_stars * 6, num_stars * 2, 0, 0);
 
     device.end_render_pass(render_pass);
 }
-
 
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
 fn create_buffer_with_data<T: Copy>(
@@ -271,10 +306,8 @@ fn create_buffer_with_data<T: Copy>(
     usage: BufferUsageFlags,
     data: &[T],
 ) -> Result<Buffer, Box<dyn std::error::Error>> {
-    // Figure out the length of the data in bytes
     let len_bytes = std::mem::size_of_val(data);
 
-    // Create the buffer with the size and usage we want
     let buffer = gpu
         .create_buffer()
         .with_size(len_bytes as u32)

@@ -5,5 +5,6 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 #[derive(Debug, Clone)]
 pub enum GameEvent {
     StarSelected(String),
+    PositionChanged(f32),
     Reload,
 }
