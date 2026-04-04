@@ -44,7 +44,7 @@ void main(void) {
 
 	float temp = ciToTemperature(star.ci);
 
-	// v_color = vec4(colorTemperatureToRGB(temp), 1.f);
-	v_color = vec4(star.ci, star.ci, star.ci, 0.f);
+	v_color = vec4(colorTemperatureToRGB(temp), 1.f);
+	// v_color = vec4(star.ci, star.ci, star.ci, 0.f);
 
 }

@@ -123,7 +123,7 @@ impl GameRenderer {
 }
 
 // data to be passed to the shader.
-#[repr(packed)]
+#[repr(align(16))]
 #[derive(Copy, Clone)]
 struct StarVertexData {
     position: [f32; 3],
@@ -137,7 +137,7 @@ impl From<&Star> for StarVertexData {
 
         return StarVertexData {
             position,
-            temperature: 0.3,
+            temperature: star.ci.unwrap_or(0.3),
             magnitude: 1.0,
         };
     }
