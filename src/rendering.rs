@@ -6,6 +6,7 @@ use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
+use cgmath::{ PerspectiveFov, Rad };
 
 struct Camera {
     pos: [f64; 3],
@@ -203,6 +204,7 @@ fn build_star_pipeline(
         .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
         .with_entrypoint(c"main")
         .with_storage_buffers(1)
+        .with_uniform_buffers(1)
         .build()?;
 
     let fs_shader = device
@@ -240,12 +242,21 @@ fn render_stars(
     pipeline: &GraphicsPipeline,
     star_buffer: &Buffer,
 ) {
+    let rotation = Rad(30.0);
+    let projection_matrix = PerspectiveFov {
+        fovy: rotation,
+        aspect: 1.7,
+        near: 1.0,
+        far: 3.0,
+    };
+
     let render_pass = device
         .begin_render_pass(&command_buffer, color_targets, None)
         .unwrap();
 
     render_pass.bind_graphics_pipeline(pipeline);
     render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
+    command_buffer.push_vertex_uniform_data(0, &projection_matrix);
     render_pass.draw_primitives(3, 1, 0, 0);
 
     device.end_render_pass(render_pass);

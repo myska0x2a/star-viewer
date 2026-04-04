@@ -7,9 +7,14 @@ struct StarData {
 	float magnitude;
 };
 
-layout(binding = 0, std140) readonly buffer star_data {
+layout(binding = 0, std140) readonly buffer StarBuffer {
 	StarData stars[];
 };
+
+layout(set = 1, binding = 0) uniform PushConstants {
+	mat4 projection_matrix;
+};
+
 
 // https://en.wikipedia.org/wiki/Color_index
 float ciToTemperature(const in float ci) {
