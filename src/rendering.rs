@@ -148,7 +148,7 @@ fn build_star_pipeline(
     window: &Window,
     star_handler: &StarHandler,
 ) -> Result<(GraphicsPipeline, Buffer), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(100.0);
+    let stars = star_handler.get_nearby(10.0);
     // leave 1000 as a comfortable margin.
     let max_stars = stars.len();
 
@@ -156,6 +156,7 @@ fn build_star_pipeline(
 
     for star in stars {
         star_data.push(StarVertexData::from(star));
+        println!("{}", star.name());
     }
 
     let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
@@ -246,7 +247,7 @@ fn render_stars(
 
     render_pass.bind_graphics_pipeline(pipeline);
     render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
-    render_pass.draw_primitives(3, 1, 0, 0);
+    render_pass.draw_primitives(20, 60, 0, 0);
 
     device.end_render_pass(render_pass);
 }
