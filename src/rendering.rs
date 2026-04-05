@@ -56,6 +56,8 @@ impl GameRenderer {
         info!("Init renderer");
 
         let video_subsystem = sdl.video()?;
+        let mouse = sdl.mouse();
+        
 
         let mut window = video_subsystem
             // .window("stars-game", 1920, 1200)
@@ -65,6 +67,8 @@ impl GameRenderer {
             .resizable()
             .build()
             .unwrap();
+
+        mouse.show_cursor(false);
 
         let device = Device::new(ShaderFormat::SPIRV, true)?.with_window(&mut window)?;
 
@@ -126,6 +130,13 @@ impl GameRenderer {
                 if keycode == &Some(Q) {
                     self.camera.velocity[2] = -0.1; 
                 }
+
+
+            }
+            Event::MouseMotion { timestamp, window_id, which, mousestate, x, y, xrel, yrel } => {
+                self.camera.orientation[2] += xrel / 200.0;
+                self.camera.orientation[1] += yrel / 200.0;
+
             }
             Event::KeyUp { .. } => {
                 self.camera.velocity = [0.0, 0.0, 0.0];
@@ -344,6 +355,7 @@ fn render_stars(
     struct UniformData {
         projection_matrix: Matrix4<f32>,
         position: [f32; 3],
+        rotation: [f32; 3],
     }
 
     let rotation = Rad(3.0);
@@ -357,6 +369,7 @@ fn render_stars(
     let uniform_data = UniformData {
         projection_matrix: Matrix4::from(projection_matrix),
         position: camera.pos,
+        rotation: camera.orientation,
     };
 
     let render_pass = device

@@ -14,6 +14,7 @@ layout(binding = 0, std140) readonly buffer StarBuffer {
 layout(set = 1, binding = 0, std140) uniform PushConstants {
 	mat4 projection_matrix;
 	vec3 camera_pos;
+	vec3 camera_rotation;
 };
 
 // https://en.wikipedia.org/wiki/Color_index
@@ -58,24 +59,43 @@ const vec2 vertexPos[4] = {
 const float ZOOM = 1.f;
 
 void main(void) {
+	// instancing
 	uint spriteIndex = gl_VertexIndex / 6;
 	StarData star = stars[spriteIndex];
 
+	// generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
 	vec2 coord = vertexPos[vert];
 	coord *= 0.05f;
 
-	vec3 coordWithDepth = vec3(coord + (star.position.xy/ZOOM), (star.position.z));
-
+	// positioning
+	vec3 coordWithDepth = vec3(coord + (star.position.xy), (star.position.z));
 	coordWithDepth += camera_pos;
 
-	// gl_Position = vec4(coordWithDepth, 1.f) * ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-	gl_Position = vec4(coordWithDepth, 1.f) * projection_matrix;
+	// rotation
+	mat3x3 rx = mat3x3(
+		1, 0, 0,
+		0, cos(camera_rotation.x), -sin(camera_rotation.x),
+		0, sin(camera_rotation.x), cos(camera_rotation.x)
+	);
+	mat3x3 ry = mat3x3(
+		cos(camera_rotation.y), 0, sin(camera_rotation.y),
+		0, 1, 0,
+		-sin(camera_rotation.y), 0, cos(camera_rotation.y)
+	);
+	mat3x3 rz = mat3x3(
+		cos(camera_rotation.z), -sin(camera_rotation.z), 0,
+		sin(camera_rotation.z), cos(camera_rotation.z), 0,
+		0, 0, 1
+	);
+	vec3 coordWithRotation = coordWithDepth * rz * ry * rx;
 
-	float dist = sqrt(star.position.x*star.position.x + star.position.y*star.position.y + (star.position.z-camera_pos.z)*(star.position.z-camera_pos.z));
+	// projection
+	gl_Position = vec4(coordWithRotation, 1.f) * projection_matrix;
+
+	// coloring
+	float dist = sqrt(coordWithDepth.x*coordWithDepth.x + coordWithDepth.y*coordWithDepth.y + coordWithDepth.z*coordWithDepth.z);
 	float lightmult = 10.f/(dist);
-
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
-	// v_color = vec4(1.f, 1.f, 1.f, 1.f);
 }
