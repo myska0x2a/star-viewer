@@ -74,7 +74,7 @@ impl GameUi {
             //             ui.text(format!("{}", window.nya));
             //         });
             // }
-            
+
             let zoomwindow = ui
                 .window("Viewer controls")
                 .size([230.0, 150.0], imgui::Condition::FirstUseEver)

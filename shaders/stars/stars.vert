@@ -13,8 +13,7 @@ layout(binding = 0, std140) readonly buffer StarBuffer {
 
 layout(set = 1, binding = 0, std140) uniform PushConstants {
 	mat4 projection_matrix;
-	// uint[2] screen_dimensions;
-	vec3 zoom_position;
+	vec3 camera_pos;
 };
 
 // https://en.wikipedia.org/wiki/Color_index
@@ -66,14 +65,17 @@ void main(void) {
 	vec2 coord = vertexPos[vert];
 	coord *= 0.05f;
 
-	vec3 coordWithDepth = vec3(coord + (star.position.xy/ZOOM), (star.position.z/ZOOM)-zoom_position.x);
+	vec3 coordWithDepth = vec3(coord + (star.position.xy/ZOOM), (star.position.z));
+
+	coordWithDepth += camera_pos;
 
 	// gl_Position = vec4(coordWithDepth, 1.f) * ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 	gl_Position = vec4(coordWithDepth, 1.f) * projection_matrix;
 
-	float dist = sqrt(star.position.x*star.position.x + star.position.y*star.position.y + star.position.z*star.position.z);
+	float dist = sqrt(star.position.x*star.position.x + star.position.y*star.position.y + (star.position.z-camera_pos.z)*(star.position.z-camera_pos.z));
 	float lightmult = 10.f/(dist);
 
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
+	// v_color = vec4(1.f, 1.f, 1.f, 1.f);
 }

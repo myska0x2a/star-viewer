@@ -1,17 +1,44 @@
+use crate::event::*;
 use crate::stars::*;
 use crate::util::GameUtils;
-use crate::event::*;
-use cgmath::{PerspectiveFov, Rad, Matrix4};
+use cgmath::{Matrix4, PerspectiveFov, Rad};
 use imgui::Ui;
 use imgui_sdl3::ImGuiSdl3;
 use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
+use sdl3::keyboard::Keycode::*;
 
+#[derive(Copy, Clone)]
 struct Camera {
-    pos: [f64; 3],
-    orientation: [f64; 3],
+    pos: [f32; 3],
+    orientation: [f32; 3],
+    velocity: [f32; 3],
+}
+
+impl Camera {
+    fn increment_pos(&mut self, x: f32, y: f32, z: f32) {
+        self.orientation[0] += x;
+        self.orientation[1] += y;
+        self.orientation[2] += z;
+    }
+
+    fn increment_vel(&mut self) {
+        self.pos[0] += self.velocity[0];
+        self.pos[1] += self.velocity[1];
+        self.pos[2] += self.velocity[2];
+    }
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        return Camera {
+            pos: [0.0, 0.0, 0.0],
+            orientation: [0.0, 0.0, 0.0],
+            velocity: [0.0, 0.0, 0.0],
+        };
+    }
 }
 
 pub struct GameRenderer {
@@ -21,7 +48,7 @@ pub struct GameRenderer {
     star_pipeline: GraphicsPipeline,
     star_buffer: Buffer,
     num_stars: usize,
-    position: f32,
+    camera: Camera,
 }
 
 impl GameRenderer {
@@ -31,7 +58,8 @@ impl GameRenderer {
         let video_subsystem = sdl.video()?;
 
         let mut window = video_subsystem
-            .window("Hello imgui-rs!", 1920, 1200)
+            // .window("stars-game", 1920, 1200)
+            .window("stars-game", 1000, 1000)
             .fullscreen()
             .position_centered()
             .resizable()
@@ -59,12 +87,53 @@ impl GameRenderer {
             star_pipeline,
             star_buffer,
             num_stars,
-            position: 0.0,
+            camera: Camera::default(),
         });
     }
 
     pub fn handle_ui_event(&mut self, event: &Event) {
         self.imgui.handle_event(&event);
+
+        match event {
+            Event::KeyDown {
+                timestamp,
+                window_id,
+                keycode,
+                scancode,
+                keymod,
+                repeat,
+                which,
+                raw,
+            } => {
+                // x
+                if keycode == &Some(A) {
+                    self.camera.velocity[0] = 0.1; 
+                }
+                if keycode == &Some(D) {
+                    self.camera.velocity[0] = -0.1; 
+                }
+                // y
+                if keycode == &Some(W) {
+                    self.camera.velocity[1] = -0.1; 
+                }
+                if keycode == &Some(S) {
+                    self.camera.velocity[1] = 0.1; 
+                }
+                // z
+                if keycode == &Some(E) {
+                    self.camera.velocity[2] = 0.1; 
+                }
+                if keycode == &Some(Q) {
+                    self.camera.velocity[2] = -0.1; 
+                }
+            }
+            Event::KeyUp { .. } => {
+                self.camera.velocity = [0.0, 0.0, 0.0];
+            }
+
+
+            _ => {}
+        }
     }
 
     pub fn handle_game_event(
@@ -73,7 +142,7 @@ impl GameRenderer {
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             GameEvent::PositionChanged(position) => {
-                self.position = position;
+                self.camera.pos[0] = position;
                 Ok(())
             }
             _ => Ok(()),
@@ -113,7 +182,7 @@ impl GameRenderer {
                 &self.star_pipeline,
                 &self.star_buffer,
                 self.num_stars,
-                self.position,
+                &mut self.camera,
             );
 
             self.imgui.render(
@@ -179,7 +248,7 @@ fn build_star_pipeline(
 
     for star in stars {
         star_data.push(StarVertexData::from(star));
-        println!("{}: {:?}", star.name(), (star.x, star.y, star.z));
+        // println!("{}: {:?}", star.name(), (star.x, star.y, star.z));
     }
 
     let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
@@ -220,6 +289,8 @@ fn build_star_pipeline(
 
     let fs_source = include_bytes!("../shaders/stars/stars.frag.spv");
     let vs_source = include_bytes!("../shaders/stars/stars.vert.spv");
+
+    // info!("{}", size_of::<Buffer>());
 
     let vs_shader = device
         .create_shader()
@@ -264,8 +335,10 @@ fn render_stars(
     pipeline: &GraphicsPipeline,
     star_buffer: &Buffer,
     num_stars: usize,
-    position: f32,
+    camera: &mut Camera,
 ) {
+    camera.increment_vel();
+
     #[repr(align(16))]
     #[derive(Copy, Clone)]
     struct UniformData {
@@ -283,15 +356,17 @@ fn render_stars(
 
     let uniform_data = UniformData {
         projection_matrix: Matrix4::from(projection_matrix),
-        position: [position, 0.0, 0.0],
+        position: camera.pos,
     };
 
     let render_pass = device
         .begin_render_pass(&command_buffer, color_targets, None)
         .unwrap();
 
+    let buffer = star_buffer.clone();
+
     render_pass.bind_graphics_pipeline(pipeline);
-    render_pass.bind_vertex_storage_buffers(0, &[star_buffer.clone()]);
+    render_pass.bind_vertex_storage_buffers(0, &[buffer]);
     command_buffer.push_vertex_uniform_data(0, &uniform_data);
     render_pass.draw_primitives(num_stars * 6, num_stars * 2, 0, 0);
 
@@ -299,39 +374,39 @@ fn render_stars(
 }
 
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
-fn create_buffer_with_data<T: Copy>(
-    gpu: &Device,
-    transfer_buffer: &TransferBuffer,
-    copy_pass: &CopyPass,
-    usage: BufferUsageFlags,
-    data: &[T],
-) -> Result<Buffer, Box<dyn std::error::Error>> {
-    let len_bytes = std::mem::size_of_val(data);
+// fn create_buffer_with_data<T: Copy>(
+//     gpu: &Device,
+//     transfer_buffer: &TransferBuffer,
+//     copy_pass: &CopyPass,
+//     usage: BufferUsageFlags,
+//     data: &[T],
+// ) -> Result<Buffer, Box<dyn std::error::Error>> {
+//     let len_bytes = std::mem::size_of_val(data);
 
-    let buffer = gpu
-        .create_buffer()
-        .with_size(len_bytes as u32)
-        .with_usage(usage)
-        .build()?;
+//     let buffer = gpu
+//         .create_buffer()
+//         .with_size(len_bytes as u32)
+//         .with_usage(usage)
+//         .build()?;
 
-    let mut map = transfer_buffer.map::<T>(gpu, true);
-    let mem = map.mem_mut();
-    for (index, &value) in data.iter().enumerate() {
-        mem[index] = value;
-    }
+//     let mut map = transfer_buffer.map::<T>(gpu, true);
+//     let mem = map.mem_mut();
+//     for (index, &value) in data.iter().enumerate() {
+//         mem[index] = value;
+//     }
 
-    map.unmap();
+//     map.unmap();
 
-    copy_pass.upload_to_gpu_buffer(
-        TransferBufferLocation::new()
-            .with_offset(0)
-            .with_transfer_buffer(transfer_buffer),
-        BufferRegion::new()
-            .with_offset(0)
-            .with_size(len_bytes as u32)
-            .with_buffer(&buffer),
-        true,
-    );
+//     copy_pass.upload_to_gpu_buffer(
+//         TransferBufferLocation::new()
+//             .with_offset(0)
+//             .with_transfer_buffer(transfer_buffer),
+//         BufferRegion::new()
+//             .with_offset(0)
+//             .with_size(len_bytes as u32)
+//             .with_buffer(&buffer),
+//         true,
+//     );
 
-    Ok(buffer)
-}
+//     Ok(buffer)
+// }

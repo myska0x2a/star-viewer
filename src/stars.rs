@@ -107,6 +107,12 @@ impl StarHandler {
             nearby.push(self.stars.get(neighbor.item as usize).unwrap());
         }
 
+        info!(
+            "{} stars retreived from {} parsec radius",
+            nearby.len(),
+            radius
+        );
+
         return nearby;
     }
 

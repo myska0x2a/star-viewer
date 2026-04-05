@@ -33,6 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
+            println!("{:?}", event);
             renderer.handle_ui_event(&event);
 
             match event {
