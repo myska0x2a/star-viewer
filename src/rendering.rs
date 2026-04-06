@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::event::*;
 use crate::stars::*;
 use crate::util::GameUtils;
@@ -15,6 +17,7 @@ struct Camera {
     pos: [f32; 3],
     orientation: [f32; 3],
     velocity: [f32; 3],
+    fov: f32,
 }
 
 impl Camera {
@@ -37,6 +40,7 @@ impl Default for Camera {
             pos: [0.0, 0.0, 0.0],
             orientation: [0.0, 0.0, 0.0],
             velocity: [0.0, 0.0, 0.0],
+            fov: 3.0,
         };
     }
 }
@@ -140,6 +144,10 @@ impl GameRenderer {
             }
             Event::KeyUp { .. } => {
                 self.camera.velocity = [0.0, 0.0, 0.0];
+            }
+            Event::MouseWheel { timestamp, window_id, which, x, y, direction, mouse_x, mouse_y } => {
+                let new_fov = self.camera.fov + (y / 10.0);
+                self.camera.fov = new_fov.clamp(0.0000001, 3.14)
             }
 
 
@@ -250,7 +258,7 @@ fn build_star_pipeline(
     window: &Window,
     star_handler: &StarHandler,
 ) -> Result<(GraphicsPipeline, Buffer, usize), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(20.0);
+    let stars = star_handler.get_nearby(3.0);
     // let stars = star_handler.get_stars();
 
     let max_stars = stars.len();
@@ -358,9 +366,9 @@ fn render_stars(
         rotation: [f32; 3],
     }
 
-    let rotation = Rad(3.0);
+    let fov = Rad(camera.fov);
     let projection_matrix = PerspectiveFov {
-        fovy: rotation,
+        fovy: fov,
         aspect: 1.778,
         near: 0.1,
         far: 300.0,
