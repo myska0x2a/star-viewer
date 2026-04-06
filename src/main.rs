@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             renderer.handle_ui_event(&event);
 
             match event {
@@ -49,6 +49,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     gamecore.handle_game_event(event_user.clone())?;
                     gameui.handle_game_event(event_user.clone())?;
                     renderer.handle_game_event(event_user.clone())?;
+                }
+                Event::MouseWheel { timestamp, window_id, which, x, y, direction, mouse_x, mouse_y } => {
+                    renderer.reload_stars(gamecore.get_star_handler(), renderer.range+(x));
+                    renderer.range += x;
                 }
                 _ => {}
             }

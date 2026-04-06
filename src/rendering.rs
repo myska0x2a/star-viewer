@@ -9,8 +9,8 @@ use imgui_sdl3::ImGuiSdl3;
 use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
-use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
 use sdl3::keyboard::Keycode::*;
+use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
 
 #[derive(Copy, Clone)]
 struct Camera {
@@ -53,6 +53,7 @@ pub struct GameRenderer {
     star_buffer: Buffer,
     num_stars: usize,
     camera: Camera,
+    pub range: f32,
 }
 
 impl GameRenderer {
@@ -61,7 +62,6 @@ impl GameRenderer {
 
         let video_subsystem = sdl.video()?;
         let mouse = sdl.mouse();
-        
 
         let mut window = video_subsystem
             // .window("stars-game", 1920, 1200)
@@ -86,7 +86,7 @@ impl GameRenderer {
         });
 
         let star_pipeline = build_star_pipeline(&device, &window, star_handler)?;
-        let (star_buffer, num_stars) = load_star_buffer(&device, &window, star_handler)?;
+        let (star_buffer, num_stars) = load_star_buffer(&device, &window, star_handler, 20.0)?;
 
         return Ok(GameRenderer {
             window,
@@ -96,6 +96,7 @@ impl GameRenderer {
             star_buffer,
             num_stars,
             camera: Camera::default(),
+            range: 20.0,
         });
     }
 
@@ -115,41 +116,58 @@ impl GameRenderer {
             } => {
                 // x
                 if keycode == &Some(A) {
-                    self.camera.velocity[0] = 0.1; 
+                    self.camera.velocity[0] = 0.1;
                 }
                 if keycode == &Some(D) {
-                    self.camera.velocity[0] = -0.1; 
+                    self.camera.velocity[0] = -0.1;
                 }
                 // y
                 if keycode == &Some(W) {
-                    self.camera.velocity[1] = -0.1; 
+                    self.camera.velocity[1] = -0.1;
                 }
                 if keycode == &Some(S) {
-                    self.camera.velocity[1] = 0.1; 
+                    self.camera.velocity[1] = 0.1;
                 }
                 // z
                 if keycode == &Some(E) {
-                    self.camera.velocity[2] = 0.1; 
+                    self.camera.velocity[2] = 0.1;
                 }
                 if keycode == &Some(Q) {
-                    self.camera.velocity[2] = -0.1; 
+                    self.camera.velocity[2] = -0.1;
                 }
-
-
             }
-            Event::MouseMotion { timestamp, window_id, which, mousestate, x, y, xrel, yrel } => {
+
+            Event::MouseMotion {
+                timestamp,
+                window_id,
+                which,
+                mousestate,
+                x,
+                y,
+                xrel,
+                yrel,
+            } => {
                 self.camera.orientation[2] += xrel / 200.0;
                 self.camera.orientation[1] += yrel / 200.0;
-
             }
+
             Event::KeyUp { .. } => {
                 self.camera.velocity = [0.0, 0.0, 0.0];
             }
-            Event::MouseWheel { timestamp, window_id, which, x, y, direction, mouse_x, mouse_y } => {
+
+            Event::MouseWheel {
+                timestamp,
+                window_id,
+                which,
+                x,
+                y,
+                direction,
+                mouse_x,
+                mouse_y,
+            } => {
                 let new_fov = self.camera.fov + (y / 10.0);
                 self.camera.fov = new_fov.clamp(0.0000001, 3.14)
             }
-
 
             _ => {}
         }
@@ -177,8 +195,6 @@ impl GameRenderer {
         let event_pump = &mut event;
 
         let mut command_buffer = self.device.acquire_command_buffer()?;
-
-        let mut star_radius = 0.0;
 
         if let Ok(swapchain) = command_buffer.wait_and_acquire_swapchain_texture(&self.window) {
             let color_targets = [ColorTargetInfo::default()
@@ -223,6 +239,12 @@ impl GameRenderer {
         Ok(())
     }
 
+
+    pub fn reload_stars(&mut self, star_handler: &StarHandler, range: f32) -> Result<(), Box<dyn std::error::Error>> {
+        (self.star_buffer, self.num_stars) = load_star_buffer(&self.device, &self.window, star_handler, range)?;
+        Ok(())
+    }
+
     pub fn close(self) -> Result<(), Box<dyn std::error::Error>> {
         let mut command_buffer = self.device.acquire_command_buffer()?;
         command_buffer.cancel();
@@ -253,9 +275,13 @@ impl From<&Star> for StarVertexData {
     }
 }
 
-fn load_star_buffer(device: &Device, window: &Window, star_handler: &StarHandler) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(3.0);
-    // let stars = star_handler.get_stars();
+fn load_star_buffer(
+    device: &Device,
+    window: &Window,
+    star_handler: &StarHandler,
+    range: f32,
+) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
+    let stars = star_handler.get_nearby(range as f64);
 
     let max_stars = stars.len();
 
@@ -263,7 +289,6 @@ fn load_star_buffer(device: &Device, window: &Window, star_handler: &StarHandler
 
     for star in stars {
         star_data.push(StarVertexData::from(star));
-        // println!("{}: {:?}", star.name(), (star.x, star.y, star.z));
     }
 
     let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
