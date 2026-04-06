@@ -85,8 +85,8 @@ impl GameRenderer {
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
 
-        let (star_pipeline, star_buffer, num_stars) =
-            build_star_pipeline(&device, &window, star_handler)?;
+        let star_pipeline = build_star_pipeline(&device, &window, star_handler)?;
+        let (star_buffer, num_stars) = load_star_buffer(&device, &window, star_handler)?;
 
         return Ok(GameRenderer {
             window,
@@ -253,11 +253,7 @@ impl From<&Star> for StarVertexData {
     }
 }
 
-fn build_star_pipeline(
-    device: &Device,
-    window: &Window,
-    star_handler: &StarHandler,
-) -> Result<(GraphicsPipeline, Buffer, usize), Box<dyn std::error::Error>> {
+fn load_star_buffer(device: &Device, window: &Window, star_handler: &StarHandler) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
     let stars = star_handler.get_nearby(3.0);
     // let stars = star_handler.get_stars();
 
@@ -306,6 +302,14 @@ fn build_star_pipeline(
         copy_cmd.submit()?;
     }
 
+    return Ok((star_buffer, max_stars));
+}
+
+fn build_star_pipeline(
+    device: &Device,
+    window: &Window,
+    star_handler: &StarHandler,
+) -> Result<GraphicsPipeline, Box<dyn std::error::Error>> {
     let fs_source = include_bytes!("../shaders/stars/stars.frag.spv");
     let vs_source = include_bytes!("../shaders/stars/stars.vert.spv");
 
@@ -343,7 +347,7 @@ fn build_star_pipeline(
     drop(vs_shader);
     drop(fs_shader);
 
-    return Ok((pipeline, star_buffer, max_stars));
+    return Ok(pipeline);
 }
 
 fn render_stars(
