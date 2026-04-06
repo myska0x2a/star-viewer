@@ -10,6 +10,7 @@ use log::{error, info};
 use sdl3::EventSubsystem;
 use sdl3::event::EventSender;
 use sdl3::keyboard::Keycode::*;
+use sdl3::video::ProgressState;
 use sdl3::{EventPump, Sdl, event::Event, gpu::*, pixels::Color, video::Window};
 
 #[derive(Copy, Clone)]
@@ -61,10 +62,8 @@ impl GameRenderer {
         info!("Init renderer");
 
         let video_subsystem = sdl.video()?;
-        let mouse = sdl.mouse();
 
         let mut window = video_subsystem
-            // .window("stars-game", 1920, 1200)
             .window("stars-game", 1000, 1000)
             .fullscreen()
             .position_centered()
@@ -72,7 +71,6 @@ impl GameRenderer {
             .build()
             .unwrap();
 
-        mouse.show_cursor(false);
 
         let device = Device::new(ShaderFormat::SPIRV, true)?.with_window(&mut window)?;
 
@@ -395,10 +393,12 @@ fn render_stars(
         rotation: [f32; 3],
     }
 
+    let window_size = window.size();
+
     let fov = Rad(camera.fov);
     let projection_matrix = PerspectiveFov {
         fovy: fov,
-        aspect: 1.778,
+        aspect: window_size.0 as f32/window_size.1 as f32,
         near: 0.1,
         far: 300.0,
     };

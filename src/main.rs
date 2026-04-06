@@ -51,8 +51,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     renderer.handle_game_event(event_user.clone())?;
                 }
                 Event::MouseWheel { timestamp, window_id, which, x, y, direction, mouse_x, mouse_y } => {
-                    renderer.reload_stars(gamecore.get_star_handler(), renderer.range+(x));
-                    renderer.range += x;
+                    renderer.range = (renderer.range + x).clamp(0.2, 9999999.0);
+                    renderer.reload_stars(gamecore.get_star_handler(), renderer.range);
                 }
                 _ => {}
             }
