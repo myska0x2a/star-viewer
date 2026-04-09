@@ -56,6 +56,26 @@ const vec2 vertexPos[4] = {
     {1.0f, 1.0f}
 };
 
+mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
+	mat3x3 x = mat3x3(
+		1, 0, 0,
+		0, cos(rx), -sin(rx),
+		0, sin(rx), cos(rx)
+	);
+	mat3x3 y = mat3x3(
+		cos(ry), 0, sin(ry),
+		0, 1, 0,
+		-sin(ry), 0, cos(ry)
+	);
+	mat3x3 z = mat3x3(
+		cos(rz), -sin(rz), 0,
+		sin(rz), cos(rz), 0,
+		0, 0, 1
+	);
+
+	return z * y * x;
+}
+
 const float ZOOM = 1.f;
 
 void main(void) {
@@ -73,22 +93,7 @@ void main(void) {
 	coordWithDepth += camera_pos;
 
 	// rotation
-	mat3x3 rx = mat3x3(
-		1, 0, 0,
-		0, cos(camera_rotation.x), -sin(camera_rotation.x),
-		0, sin(camera_rotation.x), cos(camera_rotation.x)
-	);
-	mat3x3 ry = mat3x3(
-		cos(camera_rotation.y), 0, sin(camera_rotation.y),
-		0, 1, 0,
-		-sin(camera_rotation.y), 0, cos(camera_rotation.y)
-	);
-	mat3x3 rz = mat3x3(
-		cos(camera_rotation.z), -sin(camera_rotation.z), 0,
-		sin(camera_rotation.z), cos(camera_rotation.z), 0,
-		0, 0, 1
-	);
-	vec3 coordWithRotation = coordWithDepth * rz * ry * rx;
+	vec3 coordWithRotation = coordWithDepth * three_dimensional_rotation(camera_rotation.x, camera_rotation.y, camera_rotation.z);
 
 	// projection
 	gl_Position = vec4(coordWithRotation, 1.f) * projection_matrix;
