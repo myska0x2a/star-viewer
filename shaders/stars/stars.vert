@@ -1,5 +1,8 @@
 #version 440
 layout (location = 0) out vec4 v_color;
+// Source - https://stackoverflow.com/a/49267182
+layout (location = 1) noperspective out vec2 v_ndc;
+
 
 struct StarData {
 	vec3 position;
@@ -76,7 +79,7 @@ mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
 }
 
 const float ZOOM = 1.f;
-const float STAR_SIZE = 0.005f;
+const float STAR_SIZE = 0.05f;
 const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
 
 void main(void) {
@@ -86,13 +89,15 @@ void main(void) {
 
 	// star coordinate projection to NDC
 	vec3 starPos = star.position - cameraPos;
+	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
+
 	mat3x3 rotation_matrix = three_dimensional_rotation(cameraRot.x, cameraRot.y, cameraRot.z);
 	vec4 starPosHomogenousCoordinates = vec4(starPos * rotation_matrix, 1.f) * projection_matrix;
 
 	// billboard vert generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
 	vec3 squareVert = vec3(vertexPos[vert], 0.f);
-	squareVert *= STAR_SIZE;
+	squareVert *= STAR_SIZE / dist;
 	squareVert.x *= (SCREEN_DIM.y / SCREEN_DIM.x);
 
 	// billboard position assignment (in NDC space)
@@ -100,7 +105,6 @@ void main(void) {
 	gl_Position = billboardVert;
 
 	// coloring
-	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
 	float lightmult = 10.f/(dist);
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
