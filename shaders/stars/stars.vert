@@ -14,7 +14,7 @@ layout(binding = 0, std140) readonly buffer StarBuffer {
 layout(set = 1, binding = 0, std140) uniform PushConstants {
 	mat4 projection_matrix;
 	vec3 cameraPos;
-	vec3 camera_rotation;
+	vec3 cameraRot;
 };
 
 // https://en.wikipedia.org/wiki/Color_index
@@ -49,8 +49,7 @@ mat4 ortho(float left, float right, float bottom, float top, float near, float f
 
 // https://moonside.games/posts/sdl-gpu-sprite-batcher/
 const uint[6] triangleIndices = {0, 1, 2, 3, 2, 1};
-const vec2 vertexPos[4] = {
-    {0.0f, 0.0f},
+const vec2 vertexPos[4] = { {0.0f, 0.0f},
     {1.0f, 0.0f},
     {0.0f, 1.0f},
     {1.0f, 1.0f}
@@ -77,28 +76,28 @@ mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
 }
 
 const float ZOOM = 1.f;
+const float STAR_SIZE = 0.005f;
+const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
 
 void main(void) {
 	// instancing
 	uint spriteIndex = gl_VertexIndex / 6;
 	StarData star = stars[spriteIndex];
 
-	vec3 starPos = star.position;
+	// star coordinate projection to NDC
+	vec3 starPos = star.position - cameraPos;
+	mat3x3 rotation_matrix = three_dimensional_rotation(cameraRot.x, cameraRot.y, cameraRot.z);
+	vec4 starPosHomogenousCoordinates = vec4(starPos * rotation_matrix, 1.f) * projection_matrix;
 
-	// generation
+	// billboard vert generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
-	vec2 squareVert = vertexPos[vert];
-	squareVert *= 0.05f;
+	vec3 squareVert = vec3(vertexPos[vert], 0.f);
+	squareVert *= STAR_SIZE;
+	squareVert.x *= (SCREEN_DIM.y / SCREEN_DIM.x);
 
-	// positioning
-	starPos += cameraPos;
-	starPos += vec3(squareVert, 1.f);
-
-	// rotation
-	vec3 starCoordWithRotation = starPos * three_dimensional_rotation(camera_rotation.x, camera_rotation.y, camera_rotation.z);
-
-	// projection
-	gl_Position = vec4(starCoordWithRotation, 1.f) * projection_matrix;
+	// billboard position assignment (in NDC space)
+	vec4 billboardVert = starPosHomogenousCoordinates + vec4(squareVert, 0.f);
+	gl_Position = billboardVert;
 
 	// coloring
 	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);

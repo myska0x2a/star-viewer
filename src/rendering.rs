@@ -114,10 +114,10 @@ impl GameRenderer {
             } => {
                 // x
                 if keycode == &Some(A) {
-                    self.camera.velocity[0] = 0.1;
+                    self.camera.velocity[0] = -0.1;
                 }
                 if keycode == &Some(D) {
-                    self.camera.velocity[0] = -0.1;
+                    self.camera.velocity[0] = 0.1;
                 }
                 // y
                 if keycode == &Some(W) {
