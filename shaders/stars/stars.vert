@@ -1,8 +1,5 @@
 #version 440
 layout (location = 0) out vec4 v_color;
-// Source - https://stackoverflow.com/a/49267182
-layout (location = 1) noperspective out vec2 v_ndc;
-
 
 struct StarData {
 	vec3 position;
@@ -53,9 +50,9 @@ mat4 ortho(float left, float right, float bottom, float top, float near, float f
 // https://moonside.games/posts/sdl-gpu-sprite-batcher/
 const uint[6] triangleIndices = {0, 1, 2, 3, 2, 1};
 const vec2 vertexPos[4] = { {0.0f, 0.0f},
-    {1.0f, 0.0f},
-    {0.0f, 1.0f},
-    {1.0f, 1.0f}
+    {0.5f, 0.0f},
+    {0.0f, 0.5f},
+    {0.5f, 0.5f}
 };
 
 mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
