@@ -13,7 +13,7 @@ layout(binding = 0, std140) readonly buffer StarBuffer {
 
 layout(set = 1, binding = 0, std140) uniform PushConstants {
 	mat4 projection_matrix;
-	vec3 camera_pos;
+	vec3 cameraPos;
 	vec3 camera_rotation;
 };
 
@@ -83,23 +83,25 @@ void main(void) {
 	uint spriteIndex = gl_VertexIndex / 6;
 	StarData star = stars[spriteIndex];
 
+	vec3 starPos = star.position;
+
 	// generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
-	vec2 coord = vertexPos[vert];
-	coord *= 0.05f;
+	vec2 squareVert = vertexPos[vert];
+	squareVert *= 0.05f;
 
 	// positioning
-	vec3 coordWithDepth = vec3(coord + (star.position.xy), (star.position.z));
-	coordWithDepth += camera_pos;
+	starPos += cameraPos;
+	starPos += vec3(squareVert, 1.f);
 
 	// rotation
-	vec3 coordWithRotation = coordWithDepth * three_dimensional_rotation(camera_rotation.x, camera_rotation.y, camera_rotation.z);
+	vec3 starCoordWithRotation = starPos * three_dimensional_rotation(camera_rotation.x, camera_rotation.y, camera_rotation.z);
 
 	// projection
-	gl_Position = vec4(coordWithRotation, 1.f) * projection_matrix;
+	gl_Position = vec4(starCoordWithRotation, 1.f) * projection_matrix;
 
 	// coloring
-	float dist = sqrt(coordWithDepth.x*coordWithDepth.x + coordWithDepth.y*coordWithDepth.y + coordWithDepth.z*coordWithDepth.z);
+	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
 	float lightmult = 10.f/(dist);
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
