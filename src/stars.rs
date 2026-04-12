@@ -5,7 +5,7 @@ use std::io;
 
 pub const PARSEC_LY: f64 = 3.262;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Star {
     id: u32,
     hip: Option<i32>,
@@ -59,6 +59,7 @@ impl Star {
     }
 }
 
+#[derive(Clone)]
 pub struct StarHandler {
     stars: Vec<Star>,
     tree: KdTree<f64, u32, 3, 32, u32>,

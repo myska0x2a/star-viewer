@@ -1,6 +1,6 @@
 use crate::event::*;
 use crate::fleet::*;
-use crate::rendering::GameRenderer;
+use crate::graphics::rendering::GameRenderer;
 use crate::stars::*;
 use crate::util::*;
 use log::{info, warn};

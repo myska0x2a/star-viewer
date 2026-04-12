@@ -1,13 +1,11 @@
 use game::core::GameCore;
 use game::event::*;
-use game::gamepad::*;
-use game::rendering::*;
+use game::graphics::rendering::*;
 use game::ui::*;
 
 use env_logger::Env;
-use log::{Level, debug, error, info, log_enabled, trace};
+use log::info;
 use sdl3::event::*;
-use sdl3::gamepad::Gamepad;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // start logging
@@ -49,19 +47,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     gamecore.handle_game_event(event_user.clone())?;
                     gameui.handle_game_event(event_user.clone())?;
                     renderer.handle_game_event(event_user.clone())?;
-                }
-                Event::MouseWheel {
-                    timestamp,
-                    window_id,
-                    which,
-                    x,
-                    y,
-                    direction,
-                    mouse_x,
-                    mouse_y,
-                } => {
-                    renderer.range = (renderer.range + x).clamp(0.2, 9999999.0);
-                    renderer.reload_stars(gamecore.get_star_handler(), renderer.range);
                 }
                 _ => {}
             }
