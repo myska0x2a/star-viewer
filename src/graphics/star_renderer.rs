@@ -1,3 +1,4 @@
+//! Module for the rendering of stars specifically.
 use crate::graphics::rendering::*;
 use crate::stars::*;
 use cgmath::{Matrix4, PerspectiveFov, Rad};

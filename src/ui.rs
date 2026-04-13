@@ -1,3 +1,4 @@
+//! User interface builder.
 use crate::event::*;
 use imgui::Ui;
 use log::info;

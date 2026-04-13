@@ -1,3 +1,4 @@
+//! Game event heirarchy.
 use sdl3::EventPump;
 use std::sync::mpsc::TryIter;
 use std::sync::mpsc::{Receiver, Sender, channel};

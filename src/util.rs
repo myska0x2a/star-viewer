@@ -1,3 +1,4 @@
+//! WIP service locator, may be scrapped.
 use sdl3::Sdl;
 
 pub struct GameUtils {

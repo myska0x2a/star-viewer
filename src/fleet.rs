@@ -1,3 +1,4 @@
+//! Handling/Updating of ships and expeditions.
 use crate::stars;
 use log::info;
 

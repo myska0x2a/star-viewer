@@ -1,3 +1,4 @@
+//! Game logic manager.
 use crate::event::*;
 use crate::fleet::*;
 use crate::graphics::rendering::GameRenderer;

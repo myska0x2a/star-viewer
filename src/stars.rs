@@ -1,3 +1,4 @@
+//! Loading and handling of stars.
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use serde::Deserialize;

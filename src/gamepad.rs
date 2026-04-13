@@ -1,3 +1,4 @@
+//! WIP gamepad support.
 use crate::event::*;
 use log::{Level, debug, error, info, log_enabled, trace};
 use sdl3::event::*;
