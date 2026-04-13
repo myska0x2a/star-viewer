@@ -33,7 +33,7 @@ impl StarRenderer {
             .create_shader()
             .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
             .with_entrypoint(c"main")
-            // .with_samplers(1)
+            .with_samplers(1)
             .build()?;
 
         let swapchain_format = device.get_swapchain_texture_format(&window);

@@ -1,5 +1,7 @@
 #version 440
-layout (location = 0) out vec4 v_color;
+
+layout (location = 0) out vec2 out_tex_coord;
+layout (location = 1) out vec4 v_color;
 
 struct StarData {
 	vec3 position;
@@ -44,15 +46,22 @@ mat4 ortho(float left, float right, float bottom, float top, float near, float f
         0, 2.0 / (top - bottom), 0, 0,
         0, 0, -1.0 / (far - near), 0,
         -(right + left) / (right - left), -(top + bottom) / (top - bottom), -near / (far - near), 1
-    );
-}
+    ); }
 
 // https://moonside.games/posts/sdl-gpu-sprite-batcher/
 const uint[6] triangleIndices = {0, 1, 2, 3, 2, 1};
-const vec2 vertexPos[4] = { {0.0f, 0.0f},
+const vec2 vertexPos[4] = { 
+    {0.0f, 0.0f},
     {0.5f, 0.0f},
     {0.0f, 0.5f},
     {0.5f, 0.5f}
+};
+
+const vec2 textureCoord[4] = {
+    {0.0f, 0.0f},
+    {1.f, 0.0f},
+    {0.0f, 1.f},
+    {1.f, 1.f}
 };
 
 mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
@@ -78,6 +87,7 @@ mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
 const float ZOOM = 1.f;
 const float STAR_SIZE = 0.05f;
 const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
+const int TEX_DIMENSIONS = 15;
 
 void main(void) {
 	// instancing
@@ -105,4 +115,6 @@ void main(void) {
 	float lightmult = 10.f/(dist);
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
+
+	out_tex_coord = textureCoord[vert];
 }

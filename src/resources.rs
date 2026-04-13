@@ -18,7 +18,10 @@ impl ResourceManager {
 
         let copy_commands = device.acquire_command_buffer()?;
         let copy_pass = device.begin_copy_pass(&copy_commands)?;
-        let star_texture = create_texture_from_image(device, "star.bmp", &copy_pass)?;
+        let star_texture = create_texture_from_image(device, "assets/star.bmp", &copy_pass)?;
+
+        device.end_copy_pass(copy_pass);
+        copy_commands.submit()?;
 
         let mut textures = HashMap::new();
         textures.insert("star.bmp", star_texture);
@@ -36,7 +39,7 @@ impl ResourceManager {
 }
 
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-texture.rs
-pub fn create_texture_from_image(
+fn create_texture_from_image(
     gpu: &Device,
     image_path: impl AsRef<Path>,
     copy_pass: &CopyPass,
