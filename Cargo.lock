@@ -302,24 +302,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
 
 [[package]]
-name = "game"
-version = "0.1.0"
-dependencies = [
- "cgmath",
- "csv",
- "env_logger",
- "imgui",
- "imgui-sdl3",
- "kiddo",
- "log",
- "num-traits",
- "rand",
- "sdl3",
- "serde",
- "std140",
-]
-
-[[package]]
 name = "generator"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -862,6 +844,24 @@ name = "sorted-vec"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19f58d7b0190c7f12df7e8be6b79767a0836059159811b869d5ab55721fe14d0"
+
+[[package]]
+name = "stars-game"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "csv",
+ "env_logger",
+ "imgui",
+ "imgui-sdl3",
+ "kiddo",
+ "log",
+ "num-traits",
+ "rand",
+ "sdl3",
+ "serde",
+ "std140",
+]
 
 [[package]]
 name = "std140"

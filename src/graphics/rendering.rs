@@ -1,6 +1,7 @@
 //! Rendering manager.
 use crate::event::*;
 use crate::graphics::star_renderer::StarRenderer;
+use crate::resources::ResourceManager;
 use crate::stars::*;
 use cgmath::{Matrix4, PerspectiveFov, Rad};
 use imgui::Ui;
@@ -46,7 +47,7 @@ impl Default for Camera {
 
 pub struct GameRenderer {
     window: Window,
-    device: Device,
+    pub device: Device,
     imgui: ImGuiSdl3,
     star_renderer: StarRenderer,
     camera: Camera,
@@ -92,6 +93,7 @@ impl GameRenderer {
     pub fn render(
         &mut self,
         sdl: &mut Sdl,
+        resources: &ResourceManager,
         ui_callback: impl FnMut(&mut Ui),
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event = sdl.event_pump()?;
@@ -100,20 +102,26 @@ impl GameRenderer {
         let mut command_buffer = self.device.acquire_command_buffer()?;
 
         if let Ok(swapchain) = command_buffer.wait_and_acquire_swapchain_texture(&self.window) {
-            let color_targets = [ColorTargetInfo::default()
+            let imgui_color_target = [ColorTargetInfo::default()
                 .with_texture(&swapchain)
                 .with_load_op(LoadOp::LOAD)
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(128, 128, 128))];
 
-            let triangle_color_target = [ColorTargetInfo::default()
+            let star_color_target = [ColorTargetInfo::default()
                 .with_texture(&swapchain)
                 .with_load_op(LoadOp::CLEAR)
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(0, 0, 0))];
 
-            // self.render_stars(&command_buffer, &triangle_color_target);
-            self.star_renderer.render(&self.device, &self.window, &mut command_buffer, &triangle_color_target, &mut self.camera)?;
+            self.star_renderer.render(
+                &self.device,
+                &self.window,
+                &mut command_buffer,
+                &star_color_target,
+                &mut self.camera,
+                resources,
+            )?;
 
             self.imgui.render(
                 sdl,
@@ -121,7 +129,7 @@ impl GameRenderer {
                 &self.window,
                 &event_pump,
                 &mut command_buffer,
-                &color_targets,
+                &imgui_color_target,
                 ui_callback,
             );
 
@@ -138,10 +146,7 @@ impl GameRenderer {
         self.imgui.handle_event(&event);
 
         match event {
-            Event::KeyDown {
-                keycode,
-                ..
-            } => {
+            Event::KeyDown { keycode, .. } => {
                 // x
                 if keycode == &Some(A) {
                     self.camera.velocity[0] = -0.1;
@@ -169,25 +174,21 @@ impl GameRenderer {
                 self.camera.velocity = [0.0, 0.0, 0.0];
             }
 
-            Event::MouseMotion {
-                xrel,
-                yrel,
-                ..
-            } => {
+            Event::MouseMotion { xrel, yrel, .. } => {
                 self.camera.orientation[2] += xrel / 200.0;
                 self.camera.orientation[1] += yrel / 200.0;
             }
 
-            Event::MouseWheel {
-                x,
-                y,
-                ..
-            } => {
+            Event::MouseWheel { x, y, .. } => {
                 let new_fov = self.camera.fov + (y / 10.0);
                 self.camera.fov = new_fov.clamp(0.0000001, 3.14);
                 if x != &0.0f32 {
                     self.star_renderer.range = (self.star_renderer.range + x).clamp(0.2, 9999999.0);
-                    self.star_renderer.reload(&self.device, &self.window, self.star_renderer.range)?;
+                    self.star_renderer.reload(
+                        &self.device,
+                        &self.window,
+                        self.star_renderer.range,
+                    )?;
                 }
             }
             _ => {}
@@ -276,4 +277,3 @@ impl From<&Star> for StarVertexData {
 
 //     Ok(buffer)
 // }
-

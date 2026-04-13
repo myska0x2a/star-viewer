@@ -1,27 +1,41 @@
 //! Game resource loading and management (e.g. Textures, Audio).
-use std::collections::HashMap;
-// use sdl3::gpu::{ Device, TextureCreateInfo, TextureFormat, TextureType, TextureUsage, TransferBufferUsage, Texture };
+use log::info;
 use sdl3::gpu::*;
 use sdl3::surface::Surface;
-use sdl3::gpu::Texture;
+use std::collections::HashMap;
+use std::io::Error;
 use std::path::Path;
 
-
+#[derive(Clone)]
 pub struct ResourceManager {
-    root: String,
-    textures: HashMap<String, Texture<'static>>
+    root: &'static str,
+    textures: HashMap<&'static str, Texture<'static>>,
 }
 
 impl ResourceManager {
-    pub fn load(device: &Device, path: String) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn load(device: &Device, path: &'static str) -> Result<Self, Box<dyn std::error::Error>> {
+        info!("Loading assets");
+
         let copy_commands = device.acquire_command_buffer()?;
         let copy_pass = device.begin_copy_pass(&copy_commands)?;
-        let star_texture = create_texture_from_image(device, "../star.bmp", &copy_pass);
-        let textures = HashMap::new();
-        Ok(Self { root: path, textures })
+        let star_texture = create_texture_from_image(device, "star.bmp", &copy_pass)?;
+
+        let mut textures = HashMap::new();
+        textures.insert("star.bmp", star_texture);
+
+        Ok(Self {
+            root: path,
+            textures,
+        })
+    }
+
+    pub fn get_texture(&self, id: &'static str) -> &Texture<'static> {
+        let texture = self.textures.get(id);
+        return texture.unwrap();
     }
 }
 
+// https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-texture.rs
 pub fn create_texture_from_image(
     gpu: &Device,
     image_path: impl AsRef<Path>,
@@ -69,4 +83,3 @@ pub fn create_texture_from_image(
 
     Ok(texture)
 }
-

@@ -1,6 +1,6 @@
 //! Module for the rendering of stars specifically.
-use crate::graphics::rendering::*;
 use crate::stars::*;
+use crate::{graphics::rendering::*, resources::ResourceManager};
 use cgmath::{Matrix4, PerspectiveFov, Rad};
 use sdl3::{gpu::*, video::Window};
 
@@ -77,6 +77,7 @@ impl StarRenderer {
         command_buffer: &CommandBuffer,
         color_targets: &[ColorTargetInfo; 1],
         camera: &mut Camera,
+        resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
         camera.increment_vel();
 
@@ -113,22 +114,24 @@ impl StarRenderer {
         render_pass.bind_graphics_pipeline(&self.pipeline);
         render_pass.bind_vertex_storage_buffers(0, &[buffer]);
 
-        // let texture_sampler = device.create_sampler(
-        //     SamplerCreateInfo::new()
-        //         .with_min_filter(Filter::Nearest)
-        //         .with_mag_filter(Filter::Nearest)
-        //         .with_mipmap_mode(SamplerMipmapMode::Nearest)
-        //         .with_address_mode_u(SamplerAddressMode::Repeat)
-        //         .with_address_mode_v(SamplerAddressMode::Repeat)
-        //         .with_address_mode_w(SamplerAddressMode::Repeat),
-        // )?;
+        let star_texture = resources.get_texture("star.bmp");
 
-        // render_pass.bind_fragment_samplers(
-        //         0,
-        //         &[TextureSamplerBinding::new()
-        //             .with_texture(&self.star_texture)
-        //             .with_sampler(&texture_sampler)],
-        // );
+        let texture_sampler = device.create_sampler(
+            SamplerCreateInfo::new()
+                .with_min_filter(Filter::Nearest)
+                .with_mag_filter(Filter::Nearest)
+                .with_mipmap_mode(SamplerMipmapMode::Nearest)
+                .with_address_mode_u(SamplerAddressMode::Repeat)
+                .with_address_mode_v(SamplerAddressMode::Repeat)
+                .with_address_mode_w(SamplerAddressMode::Repeat),
+        )?;
+
+        render_pass.bind_fragment_samplers(
+                0,
+                &[TextureSamplerBinding::new()
+                    .with_texture(&star_texture)
+                    .with_sampler(&texture_sampler)],
+        );
 
         command_buffer.push_vertex_uniform_data(0, &uniform_data);
         render_pass.draw_primitives(self.num_stars * 6, self.num_stars * 2, 0, 0);
