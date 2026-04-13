@@ -114,7 +114,8 @@ void main(void) {
 	// coloring
 	float lightmult = 10.f/(dist);
 	float temp = ciToTemperature(star.ci);
-	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
+	// v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
+	v_color = vec4(1.f, 1.f, 1.f, 1.f);
 
 	out_tex_coord = textureCoord[vert];
 }

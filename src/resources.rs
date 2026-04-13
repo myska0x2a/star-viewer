@@ -50,7 +50,7 @@ fn create_texture_from_image(
 
     let texture = gpu.create_texture(
         TextureCreateInfo::new()
-            .with_format(TextureFormat::R8g8b8a8Unorm)
+            .with_format(TextureFormat::R8g8b8a8UnormSrgb)
             .with_type(TextureType::_2D)
             .with_width(image_size.0)
             .with_height(image_size.1)
