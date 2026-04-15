@@ -3,6 +3,9 @@ name = "stars-game"
 version = "0.1.0"
 edition = "2024"
 
+[profile.dev]
+opt-level = 3
+
 [dependencies]
 cgmath = "0.18.0"
 csv = "1.4.0"
