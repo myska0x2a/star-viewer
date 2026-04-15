@@ -18,7 +18,7 @@ impl ResourceManager {
 
         let copy_commands = device.acquire_command_buffer()?;
         let copy_pass = device.begin_copy_pass(&copy_commands)?;
-        let star_texture = create_texture_from_image(device, "assets/star.bmp", &copy_pass)?;
+        let star_texture = create_texture_from_image(device, "assets/sofia.bmp", &copy_pass)?;
 
         device.end_copy_pass(copy_pass);
         copy_commands.submit()?;
