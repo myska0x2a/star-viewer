@@ -219,27 +219,6 @@ impl GameRenderer {
     }
 }
 
-// data to be passed to the shader.
-#[repr(align(16))]
-#[derive(Copy, Clone)]
-struct StarVertexData {
-    position: [f32; 3],
-    temperature: f32,
-    magnitude: f32,
-}
-
-impl From<&Star> for StarVertexData {
-    fn from(star: &Star) -> StarVertexData {
-        let position = [star.x as f32, star.y as f32, star.z as f32];
-
-        return StarVertexData {
-            position,
-            temperature: star.ci.unwrap_or(0.3),
-            magnitude: 1.0,
-        };
-    }
-}
-
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
 // fn create_buffer_with_data<T: Copy>(
 //     gpu: &Device,

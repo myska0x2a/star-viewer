@@ -29,7 +29,6 @@ float ciToTemperature(const in float ci) {
 
 // https://help.pixera.one/en_US/glsl-effects/colortemperatureglsl
 vec3 colorTemperatureToRGB(const in float temperature) {
-  // Values from: http://blenderartists.org/forum/showthread.php?270332-OSL-Goodness&p=2268693&viewfull=1#post2268693   
   mat3 m = (temperature <= 6500.0) ? mat3(vec3(0.0, -2902.1955373783176, -8257.7997278925690),
 	  vec3(0.0, 1669.5803561666639, 2575.2827530017594),
 	  vec3(1.0, 1.3302673723350029, 1.8993753891711275)) : 
@@ -91,10 +90,6 @@ const int TEX_DIMENSIONS = 15;
 const float STAR_SIZE_MULT = 0.03f;
 const float MAX_STAR_SIZE = 0.02f;
 const float MIN_STAR_SIZE = 0.05f;
-
-// const vec2 MAX_STAR_SIZE = vec2(0.03f, 0.03f);
-// const vec2 MIN_STAR_SIZE = vec2(0.03f, 0.03f);
-
 
 void main(void) {
 	// instancing
