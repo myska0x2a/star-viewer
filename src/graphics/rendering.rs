@@ -3,14 +3,15 @@ use crate::event::*;
 use crate::graphics::star_renderer::StarRenderer;
 use crate::resources::ResourceManager;
 use crate::stars::*;
-use cgmath::{Matrix4, PerspectiveFov, Rad};
+
+use log::{error, info};
+use std::marker::Copy;
+
 use imgui::Ui;
 use imgui_sdl3::ImGuiSdl3;
-use log::{error, info};
+
 use sdl3::keyboard::Keycode::*;
-use sdl3::surface::Surface;
 use sdl3::{Sdl, event::Event, gpu::*, pixels::Color, video::Window};
-use std::path::Path;
 
 #[derive(Copy, Clone)]
 pub struct Camera {
@@ -220,39 +221,39 @@ impl GameRenderer {
 }
 
 // https://github.com/vhspace/sdl3-rs/blob/master/examples/gpu-cube.rs
-// fn create_buffer_with_data<T: Copy>(
-//     gpu: &Device,
-//     transfer_buffer: &TransferBuffer,
-//     copy_pass: &CopyPass,
-//     usage: BufferUsageFlags,
-//     data: &[T],
-// ) -> Result<Buffer, Box<dyn std::error::Error>> {
-//     let len_bytes = std::mem::size_of_val(data);
+pub fn create_buffer_with_data<T: Copy>(
+    gpu: &Device,
+    transfer_buffer: &TransferBuffer,
+    copy_pass: &CopyPass,
+    usage: BufferUsageFlags,
+    data: &[T],
+) -> Result<Buffer, Box<dyn std::error::Error>> {
+    let len_bytes = std::mem::size_of_val(data);
 
-//     let buffer = gpu
-//         .create_buffer()
-//         .with_size(len_bytes as u32)
-//         .with_usage(usage)
-//         .build()?;
+    let buffer = gpu
+        .create_buffer()
+        .with_size(len_bytes as u32)
+        .with_usage(usage)
+        .build()?;
 
-//     let mut map = transfer_buffer.map::<T>(gpu, true);
-//     let mem = map.mem_mut();
-//     for (index, &value) in data.iter().enumerate() {
-//         mem[index] = value;
-//     }
+    let mut map = transfer_buffer.map::<T>(gpu, true);
+    let mem = map.mem_mut();
+    for (index, &value) in data.iter().enumerate() {
+        mem[index] = value;
+    }
 
-//     map.unmap();
+    map.unmap();
 
-//     copy_pass.upload_to_gpu_buffer(
-//         TransferBufferLocation::new()
-//             .with_offset(0)
-//             .with_transfer_buffer(transfer_buffer),
-//         BufferRegion::new()
-//             .with_offset(0)
-//             .with_size(len_bytes as u32)
-//             .with_buffer(&buffer),
-//         true,
-//     );
+    copy_pass.upload_to_gpu_buffer(
+        TransferBufferLocation::new()
+            .with_offset(0)
+            .with_transfer_buffer(transfer_buffer),
+        BufferRegion::new()
+            .with_offset(0)
+            .with_size(len_bytes as u32)
+            .with_buffer(&buffer),
+        true,
+    );
 
-//     Ok(buffer)
-// }
+    Ok(buffer)
+}

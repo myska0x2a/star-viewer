@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 pub mod colonies;
 pub mod core;
 pub mod event;

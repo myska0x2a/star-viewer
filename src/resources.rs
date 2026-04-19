@@ -3,7 +3,6 @@ use log::info;
 use sdl3::gpu::*;
 use sdl3::surface::Surface;
 use std::collections::HashMap;
-use std::io::Error;
 use std::path::Path;
 
 #[derive(Clone)]

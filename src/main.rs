@@ -4,7 +4,6 @@ use sdl3::event::*;
 use stars_game::core::GameCore;
 use stars_game::event::*;
 use stars_game::graphics::rendering::*;
-use stars_game::resources;
 use stars_game::resources::ResourceManager;
 use stars_game::ui::*;
 

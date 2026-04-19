@@ -1,9 +1,9 @@
 // build.rs
 
-use std::process::{Command, Stdio};
-use std::env;
-use std::path::Path;
-use std::io::{self, Write};
+// use std::env;
+// use std::io::{self, Write};
+// use std::path::Path;
+// use std::process::{Command, Stdio};
 
 fn main() {
     // let out_dir = env::var("OUT_DIR").unwrap();
@@ -18,13 +18,9 @@ fn main() {
     //     .output()
     //     .expect("Failed to execute command");
 
-     
-
     // let msg = String::from_utf8(glsl_output.unwrap().stdout).unwrap();
     // let msg2 = String::from_utf8_lossy(&output.stderr);
 
-
     // println!("cargo::error=\"{}\"", msg2);
     // print!("");
-
 }

@@ -2,7 +2,7 @@
 use crate::stars::*;
 use crate::{graphics::rendering::*, resources::ResourceManager};
 use cgmath::{Matrix4, PerspectiveFov, Rad};
-use sdl3::{gpu::*, video::Window};
+use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
 
 pub struct StarRenderer {
     pipeline: GraphicsPipeline,
@@ -81,6 +81,7 @@ impl StarRenderer {
     ) -> Result<(), Box<dyn std::error::Error>> {
         camera.increment_vel();
 
+        #[allow(unused)]
         #[repr(align(16))]
         #[derive(Copy, Clone)]
         struct UniformData {
@@ -127,10 +128,10 @@ impl StarRenderer {
         )?;
 
         render_pass.bind_fragment_samplers(
-                0,
-                &[TextureSamplerBinding::new()
-                    .with_texture(&star_texture)
-                    .with_sampler(&texture_sampler)],
+            0,
+            &[TextureSamplerBinding::new()
+                .with_texture(&star_texture)
+                .with_sampler(&texture_sampler)],
         );
 
         command_buffer.push_vertex_uniform_data(0, &uniform_data);
@@ -160,8 +161,7 @@ fn load_star_buffer(
     range: f32,
 ) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
     let stars = star_handler.get_nearby(range as f64);
-
-    let max_stars = stars.len();
+    let num_stars = stars.len() + 32;
 
     let mut star_data: Vec<StarVertexData> = Vec::new();
 
@@ -169,14 +169,7 @@ fn load_star_buffer(
         star_data.push(StarVertexData::from(star));
     }
 
-    let buffer_size = (max_stars * size_of::<StarVertexData>()) as u32;
-
-    // buffer which stores the stars
-    let star_buffer = device
-        .create_buffer()
-        .with_size(buffer_size)
-        .with_usage(BufferUsageFlags::COMPUTE_STORAGE_WRITE)
-        .build()?;
+    let buffer_size = (num_stars * size_of::<StarVertexData>()) as u32;
 
     let upload = device
         .create_transfer_buffer()
@@ -184,31 +177,25 @@ fn load_star_buffer(
         .with_usage(TransferBufferUsage::UPLOAD)
         .build()?;
 
-    {
-        let mut map = upload.map::<StarVertexData>(&device, true);
-        map.mem_mut().copy_from_slice(&star_data);
-        map.unmap();
+    let copy_cmd = device.acquire_command_buffer()?;
+    let copy_pass = device.begin_copy_pass(&copy_cmd)?;
 
-        let copy_cmd = device.acquire_command_buffer()?;
-        let copy_pass = device.begin_copy_pass(&copy_cmd)?;
-        copy_pass.upload_to_gpu_buffer(
-            TransferBufferLocation::new()
-                .with_offset(0)
-                .with_transfer_buffer(&upload),
-            BufferRegion::new()
-                .with_offset(0)
-                .with_size(buffer_size)
-                .with_buffer(&star_buffer),
-            true,
-        );
-        device.end_copy_pass(copy_pass);
-        copy_cmd.submit()?;
-    }
+    let star_buffer = create_buffer_with_data(
+        &device,
+        &upload,
+        &copy_pass,
+        BufferUsageFlags::COMPUTE_STORAGE_WRITE,
+        &star_data,
+    )?;
 
-    return Ok((star_buffer, max_stars));
+    device.end_copy_pass(copy_pass);
+    copy_cmd.submit()?;
+
+    return Ok((star_buffer, num_stars));
 }
 
 // data to be passed to the shader.
+#[allow(unused)]
 #[repr(align(16))]
 #[derive(Copy, Clone)]
 struct StarVertexData {
