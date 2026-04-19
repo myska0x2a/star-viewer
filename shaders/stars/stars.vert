@@ -58,13 +58,13 @@ const vec2 vertexPos[4] = {
 };
 
 const vec2 textureCoord[4] = {
-    {0.0f, 0.0f},
-    {1.f, 0.0f},
-    {0.0f, 1.f},
-    {1.f, 1.f}
+    {-1.0f, 1.0f},
+    {0.f, 1.0f},
+    {-1.0f, 0.f},
+    {0.f, 0.f}
 };
 
-mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
+mat3x3 rot3d(float rx, float ry, float rz) {
 	mat3x3 x = mat3x3(
 		1, 0, 0,
 		0, cos(rx), -sin(rx),
@@ -85,7 +85,7 @@ mat3x3 three_dimensional_rotation(float rx, float ry, float rz) {
 }
 
 const float ZOOM = 1.f;
-const float STAR_SIZE = 0.05f;
+const float STAR_SIZE = 0.03f;
 const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
 const int TEX_DIMENSIONS = 15;
 
@@ -93,23 +93,28 @@ void main(void) {
 	// instancing
 	uint spriteIndex = gl_VertexIndex / 6;
 	StarData star = stars[spriteIndex];
-
-	// star coordinate projection to NDC
+	
+	// view space transform
 	vec3 starPos = star.position - cameraPos;
-	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
+	mat3x3 rotation_matrix = rot3d(cameraRot.x, cameraRot.y, cameraRot.z);
+	starPos *= rotation_matrix;
 
-	mat3x3 rotation_matrix = three_dimensional_rotation(cameraRot.x, cameraRot.y, cameraRot.z);
-	vec4 starPosHomogenousCoordinates = vec4(starPos * rotation_matrix, 1.f) * projection_matrix;
+	// star coordinate projection to clip space
+	vec4 starPosNDC = vec4(starPos, 1.f) * projection_matrix;
+
+	// finding distance to star
+	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
 
 	// billboard vert generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
-	vec3 squareVert = vec3(vertexPos[vert], 0.f);
-	squareVert *= STAR_SIZE / dist;
+	vec2 squareVert = vertexPos[vert];
+	squareVert *= STAR_SIZE;
 	squareVert.x *= (SCREEN_DIM.y / SCREEN_DIM.x);
 
-	// billboard position assignment (in NDC space)
-	vec4 billboardVert = starPosHomogenousCoordinates + vec4(squareVert, 0.f);
-	gl_Position = billboardVert;
+	// billboard position assignment (within clip space)
+	// with distance scaling: vec4 billboardNDC = starPosNDC + vec4(squareVert, 0.f, 0.f);
+	vec4 billboardNDC = starPosNDC + vec4(squareVert * starPosNDC.w, 0.f, 0.f);
+	gl_Position = billboardNDC;
 
 	// coloring
 	float lightmult = 10.f/(dist);
@@ -117,6 +122,5 @@ void main(void) {
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
 	// v_color = vec4(1.f, 1.f, 1.f, 1.f);
 
-	// out_tex_coord = textureCoord[vert];
-	out_tex_coord = vec2(0.5f, 0.5f)
+	out_tex_coord = textureCoord[vert];
 }
