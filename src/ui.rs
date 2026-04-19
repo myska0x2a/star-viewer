@@ -76,8 +76,6 @@ impl GameUi {
             //         });
             // }
 
-            ui.set_mouse_cursor(None);
-
             let zoomwindow = ui
                 .window("Viewer controls")
                 .size([230.0, 150.0], imgui::Condition::FirstUseEver)

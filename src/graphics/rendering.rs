@@ -79,6 +79,9 @@ impl GameRenderer {
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
         });
 
+        let mouse = sdl.mouse();
+        mouse.set_relative_mouse_mode(&window, true);
+
         let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
         star_renderer.reload(&device, &window, 10.0)?;
 
