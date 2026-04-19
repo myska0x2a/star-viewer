@@ -28,6 +28,8 @@ impl ControllerHandler {
             gamepad = Some(gamepad_subsystem.get(gamepad_id)?);
         }
 
+        gamepad_subsystem.set_events_processing_state(true);
+
         return Ok(ControllerHandler {
             subsystem: gamepad_subsystem,
             controller: gamepad,

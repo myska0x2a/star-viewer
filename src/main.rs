@@ -2,8 +2,10 @@ use env_logger::Env;
 use log::info;
 use env_logger::WriteStyle;
 use sdl3::event::*;
+use sdl3::keyboard::Keycode;
 use stars_game::core::GameCore;
 use stars_game::event::*;
+use stars_game::gamepad::ControllerHandler;
 use stars_game::graphics::rendering::*;
 use stars_game::resources::ResourceManager;
 use stars_game::ui::*;
@@ -41,6 +43,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     info!("Game closing.");
                     renderer.close()?;
                     break 'main;
+                }
+                Event::KeyDown { keycode, .. } => {
+                    let mouse = sdl.mouse();
+
+                    if keycode == Some(Keycode::Return) {
+                        renderer.mousefocus = true;
+                        mouse.set_relative_mouse_mode(&renderer.window, true);
+                    }
+                    if keycode == Some(Keycode::Escape) {
+                        renderer.mousefocus = false;
+                        mouse.set_relative_mouse_mode(&renderer.window, false);
+                    }
                 }
                 Event::User { .. } => {
                     let event_user = event.as_user_event_type::<GameEvent>().unwrap();

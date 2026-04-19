@@ -47,11 +47,12 @@ impl Default for Camera {
 }
 
 pub struct GameRenderer {
-    window: Window,
+    pub window: Window,
     pub device: Device,
     imgui: ImGuiSdl3,
     star_renderer: StarRenderer,
     camera: Camera,
+    pub mousefocus: bool,
 }
 
 impl GameRenderer {
@@ -91,6 +92,7 @@ impl GameRenderer {
             imgui,
             star_renderer,
             camera: Camera::default(),
+            mousefocus: true,
         });
     }
 
@@ -179,8 +181,10 @@ impl GameRenderer {
             }
 
             Event::MouseMotion { xrel, yrel, .. } => {
-                self.camera.orientation[2] += xrel / 200.0;
-                self.camera.orientation[1] += yrel / 200.0;
+                if self.mousefocus {
+                    self.camera.orientation[2] += xrel / 200.0;
+                    self.camera.orientation[1] += yrel / 200.0;
+                }
             }
 
             Event::MouseWheel { x, y, .. } => {
@@ -194,6 +198,14 @@ impl GameRenderer {
                         self.star_renderer.range,
                     )?;
                 }
+            }
+
+            Event::ControllerAxisMotion { timestamp, which, axis, value } => {
+                info!("Controller moved");
+            }
+
+            Event::ControllerButtonDown { timestamp, which, button } => {
+                info!("Controller moved");
             }
             _ => {}
         }
