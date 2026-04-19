@@ -9,8 +9,6 @@ Rendering:
 - Implement a favourable projection/alignment scheme.
 
 
-Structure:
+General:
 
 - Make the navigation controls nicer to use (not 'sticky')
-- Generally improve the game structure and interfacing between components.
-- Code cleanup.
