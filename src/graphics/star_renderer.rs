@@ -224,7 +224,7 @@ impl From<&Star> for StarVertexData {
         return StarVertexData {
             position,
             temperature: star.ci.unwrap_or(0.3),
-            magnitude: 1.0,
+            magnitude: star.absmag,
         };
     }
 }

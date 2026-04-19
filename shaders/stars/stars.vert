@@ -85,9 +85,16 @@ mat3x3 rot3d(float rx, float ry, float rz) {
 }
 
 const float ZOOM = 1.f;
-const float STAR_SIZE = 0.03f;
 const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
 const int TEX_DIMENSIONS = 15;
+
+const float STAR_SIZE_MULT = 0.03f;
+const float MAX_STAR_SIZE = 0.02f;
+const float MIN_STAR_SIZE = 0.05f;
+
+// const vec2 MAX_STAR_SIZE = vec2(0.03f, 0.03f);
+// const vec2 MIN_STAR_SIZE = vec2(0.03f, 0.03f);
+
 
 void main(void) {
 	// instancing
@@ -104,23 +111,22 @@ void main(void) {
 
 	// finding distance to star
 	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
+	float lightmult = star.magnitude / (dist*dist);
+	lightmult = clamp(lightmult, 0.3f, 20.f);
 
 	// billboard vert generation
 	uint vert = triangleIndices[gl_VertexIndex % 6];
 	vec2 squareVert = vertexPos[vert];
-	squareVert *= STAR_SIZE;
+	squareVert *= STAR_SIZE_MULT * lightmult;
 	squareVert.x *= (SCREEN_DIM.y / SCREEN_DIM.x);
 
 	// billboard position assignment (within clip space)
-	// with distance scaling: vec4 billboardNDC = starPosNDC + vec4(squareVert, 0.f, 0.f);
 	vec4 billboardNDC = starPosNDC + vec4(squareVert * starPosNDC.w, 0.f, 0.f);
 	gl_Position = billboardNDC;
 
 	// coloring
-	float lightmult = 10.f/(dist);
 	float temp = ciToTemperature(star.ci);
 	v_color = vec4(colorTemperatureToRGB(temp)*lightmult, 1.f);
-	// v_color = vec4(1.f, 1.f, 1.f, 1.f);
 
 	out_tex_coord = textureCoord[vert];
 }

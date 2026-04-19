@@ -16,6 +16,7 @@ pub struct Star {
     bf: Option<String>,
     proper: Option<String>,
     dist: f64,
+    pub absmag: f32,
     pub ci: Option<f32>,
     pub x: f64,
     pub y: f64,
