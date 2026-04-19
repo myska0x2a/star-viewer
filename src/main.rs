@@ -1,5 +1,6 @@
 use env_logger::Env;
 use log::info;
+use env_logger::WriteStyle;
 use sdl3::event::*;
 use stars_game::core::GameCore;
 use stars_game::event::*;
@@ -9,13 +10,16 @@ use stars_game::ui::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // start logging
-    let env = Env::default()
+    let logger_env = Env::default()
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
-    env_logger::init_from_env(env);
+
+    let _logger = env_logger::Builder::from_env(logger_env)
+        .format_timestamp(None)
+        .write_style(WriteStyle::Auto)
+        .init();
 
     let mut sdl = sdl3::init()?;
-
     let mut gamecore = GameCore::new()?;
     let mut gameui = GameUi::new();
 

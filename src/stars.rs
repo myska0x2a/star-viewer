@@ -78,7 +78,7 @@ impl StarHandler {
 
     // load the star data into the handler
     pub fn load(&mut self, path: String) -> Result<(), Box<dyn std::error::Error>> {
-        info!("StarHandler loading from {}", path);
+        info!("Loading stars from {}", path);
         let mut stars: Vec<Star> = Vec::new();
         let mut tree = KdTree::new();
         let mut id: u32 = 0;
