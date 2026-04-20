@@ -50,8 +50,8 @@ pub struct GameRenderer {
     pub window: Window,
     pub device: Device,
     imgui: ImGuiSdl3,
-    star_renderer: StarRenderer,
-    camera: Camera,
+    pub star_renderer: StarRenderer,
+    pub camera: Camera,
     pub mousefocus: bool,
 }
 
@@ -84,7 +84,7 @@ impl GameRenderer {
         mouse.set_relative_mouse_mode(&window, true);
 
         let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
-        star_renderer.reload(&device, &window, 10.0)?;
+        // star_renderer.reload(&device, &window, 10.0)?;
 
         return Ok(GameRenderer {
             window,
@@ -151,63 +151,56 @@ impl GameRenderer {
     pub fn handle_ui_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
         self.imgui.handle_event(&event);
 
-        match event {
-            Event::KeyDown { keycode, .. } => {
-                // x
-                if keycode == &Some(A) {
-                    self.camera.velocity[0] = -0.1;
+        if self.mousefocus {
+            match event {
+                Event::KeyDown { keycode, .. } => {
+                    // x
+                    if keycode == &Some(A) {
+                        self.camera.velocity[0] = -0.1;
+                    }
+                    if keycode == &Some(D) {
+                        self.camera.velocity[0] = 0.1;
+                    }
+                    // y
+                    if keycode == &Some(W) {
+                        self.camera.velocity[1] = -0.1;
+                    }
+                    if keycode == &Some(S) {
+                        self.camera.velocity[1] = 0.1;
+                    }
+                    // z
+                    if keycode == &Some(E) {
+                        self.camera.velocity[2] = 0.1;
+                    }
+                    if keycode == &Some(Q) {
+                        self.camera.velocity[2] = -0.1;
+                    }
                 }
-                if keycode == &Some(D) {
-                    self.camera.velocity[0] = 0.1;
-                }
-                // y
-                if keycode == &Some(W) {
-                    self.camera.velocity[1] = -0.1;
-                }
-                if keycode == &Some(S) {
-                    self.camera.velocity[1] = 0.1;
-                }
-                // z
-                if keycode == &Some(E) {
-                    self.camera.velocity[2] = 0.1;
-                }
-                if keycode == &Some(Q) {
-                    self.camera.velocity[2] = -0.1;
-                }
-            }
 
-            Event::KeyUp { .. } => {
-                self.camera.velocity = [0.0, 0.0, 0.0];
-            }
-
-            Event::MouseMotion { xrel, yrel, .. } => {
-                if self.mousefocus {
-                    self.camera.orientation[2] += xrel / 200.0;
-                    self.camera.orientation[1] += yrel / 200.0;
+                Event::KeyUp { .. } => {
+                    self.camera.velocity = [0.0, 0.0, 0.0];
                 }
-            }
 
-            Event::MouseWheel { x, y, .. } => {
-                let new_fov = self.camera.fov + (y / 10.0);
-                self.camera.fov = new_fov.clamp(0.0000001, 3.14);
-                if x != &0.0f32 {
-                    self.star_renderer.range = (self.star_renderer.range + x).clamp(0.2, 9999999.0);
-                    self.star_renderer.reload(
-                        &self.device,
-                        &self.window,
-                        self.star_renderer.range,
-                    )?;
+                Event::MouseMotion { xrel, yrel, .. } => {
+                    self.camera.orientation[2] += xrel / 400.0;
+                    self.camera.orientation[1] += yrel / 400.0;
                 }
-            }
 
-            Event::ControllerAxisMotion { timestamp, which, axis, value } => {
-                info!("Controller moved");
+                // Event::MouseWheel { x, y, .. } => {
+                //     let new_fov = self.camera.fov + (y / 10.0);
+                //     self.camera.fov = new_fov.clamp(0.0000001, 3.14);
+                //     if x != &0.0f32 {
+                //         self.star_renderer.range =
+                //             (self.star_renderer.range + x).clamp(0.2, 9999999.0);
+                //         self.star_renderer.reload(
+                //             &self.device,
+                //             &self.window,
+                //             self.star_renderer.range,
+                //         )?;
+                //     }
+                // }
+                _ => {}
             }
-
-            Event::ControllerButtonDown { timestamp, which, button } => {
-                info!("Controller moved");
-            }
-            _ => {}
         }
 
         Ok(())

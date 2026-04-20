@@ -8,7 +8,7 @@ pub struct StarRenderer {
     pipeline: GraphicsPipeline,
     star_buffer: Buffer,
     star_handler: StarHandler,
-    num_stars: usize,
+    pub num_stars: usize,
     pub range: f32,
 }
 
