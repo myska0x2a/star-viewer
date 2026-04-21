@@ -8,9 +8,14 @@ use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
 
+pub struct GameSettings {
+    pub free_move: bool,
+}
+
 pub struct GameCore {
     pub star_handler: StarHandler,
     pub fleet_handler: FleetHandler,
+    pub settings: GameSettings,
 }
 
 impl GameCore {
@@ -19,6 +24,9 @@ impl GameCore {
         Ok(GameCore {
             star_handler: StarHandler::new(),
             fleet_handler: FleetHandler::new(),
+            settings: GameSettings {
+                free_move: true,
+            },
         })
     }
 

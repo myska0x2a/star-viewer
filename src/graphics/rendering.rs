@@ -76,8 +76,12 @@ impl GameRenderer {
             ctx.set_ini_filename(None);
             ctx.set_log_filename(None);
 
+            let font = imgui::FontSource::TtfData { data: include_bytes!("../../assets/ShareTechMono-Regular.ttf"), size_pixels: 20.0, config: None };
+
             ctx.fonts()
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
+                // .add_font(&[font]);
+
         });
 
         let mouse = sdl.mouse();
