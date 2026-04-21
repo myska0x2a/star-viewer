@@ -4,10 +4,6 @@ use imgui::Ui;
 use log::info;
 use sdl3::event::*;
 
-struct StarSelectionWindow {
-    nya: String,
-}
-
 #[derive(Default)]
 struct StarRendererStatus {
     stars_loaded: usize,
@@ -15,7 +11,6 @@ struct StarRendererStatus {
 }
 
 pub struct GameUi {
-    starselectionwindow: Option<StarSelectionWindow>,
     star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
 }
@@ -24,7 +19,6 @@ impl GameUi {
     pub fn new() -> Self {
         info!("Init UI handler");
         GameUi {
-            starselectionwindow: None,
             star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
         }
@@ -35,10 +29,6 @@ impl GameUi {
         event: GameEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            GameEvent::StarSelected(text) => {
-                self.open_star_selection_window(text);
-                Ok(())
-            }
             GameEvent::StarRangeChanged(range, num) => {
                 self.star_renderer_status = StarRendererStatus { stars_loaded: num, range };
                 Ok(())
@@ -47,14 +37,14 @@ impl GameUi {
         }
     }
 
-    pub fn open_star_selection_window(&mut self, text: String) {
-        let starselectionwindow = StarSelectionWindow { nya: text };
-        self.starselectionwindow = Some(starselectionwindow);
-    }
+    // pub fn open_star_selection_window(&mut self, text: String) {
+    //     let starselectionwindow = StarSelectionWindow { nya: text };
+    //     self.starselectionwindow = Some(starselectionwindow);
+    // }
 
-    pub fn close_star_selection_window(&mut self) {
-        self.starselectionwindow = None;
-    }
+    // pub fn close_star_selection_window(&mut self) {
+    //     self.starselectionwindow = None;
+    // }
 
     pub fn render_ui(&mut self, ev: &EventSender, game: &mut GameCore) -> impl FnMut(&mut Ui) {
         |ui| {
@@ -72,6 +62,8 @@ impl GameUi {
 
                 ui.separator();
                 ui.text(format!("Vertices: {}", self.star_renderer_status.stars_loaded*6));
+            
+                let window = ui.window("miau");
 
                 // let text = "haiiiii";
                 // let avail = ui.content_region_max()[0] - ui.calc_text_size(text)[0];

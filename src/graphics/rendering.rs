@@ -46,16 +46,16 @@ impl Default for Camera {
     }
 }
 
-pub struct GameRenderer {
+pub struct GameRenderer<'a> {
     pub window: Window,
     pub device: Device,
     imgui: ImGuiSdl3,
-    pub star_renderer: StarRenderer,
+    pub star_renderer: StarRenderer<'a>,
     pub camera: Camera,
     pub mousefocus: bool,
 }
 
-impl GameRenderer {
+impl<'a> GameRenderer<'a> {
     pub fn init(sdl: &Sdl, star_handler: &StarHandler) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Init renderer");
 
@@ -244,7 +244,9 @@ pub fn create_buffer_with_data<T: Copy>(
 
     let buffer = gpu
         .create_buffer()
-        .with_size(len_bytes as u32)
+        // plus four to ensure it never goes below the minimum
+        // buffer size (of 4)
+        .with_size(len_bytes as u32 + 4)
         .with_usage(usage)
         .build()?;
 

@@ -117,7 +117,7 @@ void main(void) {
 
 	// billboard position assignment (within clip space)
 	vec4 billboardNDC = starPosNDC + vec4(squareVert * starPosNDC.w, 0.f, 0.f);
-	gl_Position = billboardNDC;
+	gl_Position = vec4(billboardNDC.xy, 0.f, billboardNDC.w);
 
 	// coloring
 	float temp = ciToTemperature(star.ci);

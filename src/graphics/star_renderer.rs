@@ -3,16 +3,18 @@ use crate::stars::*;
 use crate::{graphics::rendering::*, resources::ResourceManager};
 use cgmath::{Matrix4, PerspectiveFov, Rad};
 use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
+use log::info;
 
-pub struct StarRenderer {
+pub struct StarRenderer<'a> {
     pipeline: GraphicsPipeline,
     star_buffer: Buffer,
+    depth_stencil: Texture<'a>,
     star_handler: StarHandler,
     pub num_stars: usize,
     pub range: f32,
 }
 
-impl StarRenderer {
+impl<'a> StarRenderer<'a> {
     pub fn load(
         device: &Device,
         window: &Window,
@@ -44,26 +46,44 @@ impl StarRenderer {
             .with_vertex_shader(&vs_shader)
             .with_primitive_type(PrimitiveType::TriangleList)
             .with_fill_mode(FillMode::Fill)
+            .with_depth_stencil_state(
+                DepthStencilState::new()
+                    .with_enable_depth_test(true)
+                    .with_enable_depth_write(true)
+                    .with_compare_op(CompareOp::Less),
+            )
             .with_target_info(
                 GraphicsPipelineTargetInfo::new().with_color_target_descriptions(&[
                     ColorTargetDescription::new().with_format(swapchain_format),
-                ]),
+                ])
+                .with_has_depth_stencil_target(true)
+                .with_depth_stencil_format(TextureFormat::D16Unorm),
             )
             .build()?;
 
         drop(vs_shader);
         drop(fs_shader);
 
-        let copy_commands = device.acquire_command_buffer()?;
-        let copy_pass = device.begin_copy_pass(&copy_commands)?;
+        let mut depth_stencil = device.create_texture(
+            TextureCreateInfo::new()
+                .with_type(TextureType::_2D)
+                .with_width(window.size().0)
+                .with_height(window.size().1)
+                .with_layer_count_or_depth(1)
+                .with_num_levels(1)
+                .with_sample_count(SampleCount::NoMultiSampling)
+                .with_format(TextureFormat::D16Unorm)
+                .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
+        )?;
 
-        let range = 20.0;
+        let range = 0.0;
 
         let (star_buffer, num_stars) = load_star_buffer(device, window, &star_handler, range)?;
 
         return Ok(Self {
             pipeline: pipeline,
             star_buffer: star_buffer,
+            depth_stencil,
             star_handler,
             num_stars: num_stars,
             range,
@@ -106,8 +126,18 @@ impl StarRenderer {
             rotation: camera.orientation,
         };
 
+        let depth_target = DepthStencilTargetInfo::new()
+            .with_texture(&mut self.depth_stencil)
+            .with_cycle(true)
+            .with_clear_depth(1.0)
+            .with_clear_stencil(0)
+            .with_load_op(LoadOp::CLEAR)
+            .with_store_op(StoreOp::STORE)
+            .with_stencil_load_op(LoadOp::CLEAR)
+            .with_stencil_store_op(StoreOp::STORE);
+
         let render_pass = device
-            .begin_render_pass(&command_buffer, color_targets, None)
+            .begin_render_pass(&command_buffer, color_targets, Some(&depth_target))
             .unwrap();
 
         let buffer = self.star_buffer.clone();
@@ -187,6 +217,8 @@ fn load_star_buffer(
         BufferUsageFlags::COMPUTE_STORAGE_WRITE,
         &star_data,
     )?;
+
+    info!("meow");
 
     device.end_copy_pass(copy_pass);
     copy_cmd.submit()?;
