@@ -74,7 +74,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             renderer.star_renderer.range,
                         )?;
 
-                        ev.push_custom_event(GameEvent::StarRangeChanged(renderer.star_renderer.range, renderer.star_renderer.num_stars))?;
+                        ev.push_custom_event(GameEvent::StarRangeChanged(
+                            renderer.star_renderer.range,
+                            renderer.star_renderer.num_stars,
+                        ))?;
                     }
                 }
 
@@ -89,7 +92,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        renderer.render(&mut sdl, &resources, gameui.build_ui(&ev_sendable, &mut gamecore))?;
+        renderer.render(
+            &mut sdl,
+            &resources,
+            gameui.build_ui(&ev_sendable, &mut gamecore),
+        )?;
     }
 
     Ok(())

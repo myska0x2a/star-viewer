@@ -75,12 +75,15 @@ impl<'a> GameRenderer<'a> {
             ctx.set_ini_filename(None);
             ctx.set_log_filename(None);
 
-            let font = imgui::FontSource::TtfData { data: include_bytes!("../../assets/ShareTechMono-Regular.ttf"), size_pixels: 20.0, config: None };
+            let font = imgui::FontSource::TtfData {
+                data: include_bytes!("../../assets/ShareTechMono-Regular.ttf"),
+                size_pixels: 20.0,
+                config: None,
+            };
 
             ctx.fonts()
                 .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
-                // .add_font(&[font]);
-
+            // .add_font(&[font]);
         });
 
         let mouse = sdl.mouse();
@@ -119,7 +122,7 @@ impl<'a> GameRenderer<'a> {
 
             let star_color_target = [ColorTargetInfo::default()
                 .with_texture(&swapchain)
-                .with_load_op(LoadOp::CLEAR)
+                .with_load_op(LoadOp::LOAD)
                 .with_store_op(StoreOp::STORE)
                 .with_clear_color(Color::RGB(128, 128, 128))];
 

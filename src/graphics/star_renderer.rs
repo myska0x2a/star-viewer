@@ -2,8 +2,8 @@
 use crate::stars::*;
 use crate::{graphics::rendering::*, resources::ResourceManager};
 use cgmath::{Matrix4, PerspectiveFov, Rad};
-use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
 use log::info;
+use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
 
 pub struct StarRenderer<'a> {
     pipeline: GraphicsPipeline,
@@ -53,11 +53,22 @@ impl<'a> StarRenderer<'a> {
                     .with_compare_op(CompareOp::Less),
             )
             .with_target_info(
-                GraphicsPipelineTargetInfo::new().with_color_target_descriptions(&[
-                    ColorTargetDescription::new().with_format(swapchain_format),
-                ])
-                .with_has_depth_stencil_target(true)
-                .with_depth_stencil_format(TextureFormat::D16Unorm),
+                GraphicsPipelineTargetInfo::new()
+                    .with_has_depth_stencil_target(true)
+                    .with_depth_stencil_format(TextureFormat::D16Unorm)
+                    .with_color_target_descriptions(&[ColorTargetDescription::new()
+                        .with_format(swapchain_format)
+                        // .with_blend_state(
+                        //     ColorTargetBlendState::default()
+                        //         .with_enable_blend(true)
+                        //         .with_src_color_blendfactor(BlendFactor::One)
+                        //         .with_dst_color_blendfactor(BlendFactor::One)
+                        //         .with_src_alpha_blendfactor(BlendFactor::SrcAlpha)
+                        //         .with_dst_alpha_blendfactor(BlendFactor::DstAlpha)
+                        //         .with_alpha_blend_op(BlendOp::Add)
+                        //         .with_color_blend_op(BlendOp::Add),
+                        // )
+                    ]),
             )
             .build()?;
 
@@ -146,13 +157,12 @@ impl<'a> StarRenderer<'a> {
         let star_texture = resources.get_texture("star.png");
 
         let texture_sampler = device.create_sampler(
-            SamplerCreateInfo::new()
-                // .with_min_filter(Filter::Nearest)
-                // .with_mag_filter(Filter::Nearest)
-                // .with_mipmap_mode(SamplerMipmapMode::Nearest)
-                // .with_address_mode_u(SamplerAddressMode::Repeat)
-                // .with_address_mode_v(SamplerAddressMode::Repeat)
-                // .with_address_mode_w(SamplerAddressMode::Repeat),
+            SamplerCreateInfo::new(), // .with_min_filter(Filter::Nearest)
+                                      // .with_mag_filter(Filter::Nearest)
+                                      // .with_mipmap_mode(SamplerMipmapMode::Nearest)
+                                      // .with_address_mode_u(SamplerAddressMode::Repeat)
+                                      // .with_address_mode_v(SamplerAddressMode::Repeat)
+                                      // .with_address_mode_w(SamplerAddressMode::Repeat),
         )?;
 
         render_pass.bind_fragment_samplers(

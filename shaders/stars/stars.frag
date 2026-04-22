@@ -12,5 +12,10 @@ void main() {
 	// o_frag_color = v_color;
 	// o_frag_color = vec4(1.f, 1.f, 1.f, 1.f);
 	vec4 tex = texture(tex_sampler, tex_coord);
+
+	if (tex.z < 0.1) {
+		discard;
+	}
+
 	o_frag_color = tex * v_color * tex.w;
 }

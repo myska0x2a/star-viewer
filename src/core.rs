@@ -24,9 +24,7 @@ impl GameCore {
         Ok(GameCore {
             star_handler: StarHandler::new(),
             fleet_handler: FleetHandler::new(),
-            settings: GameSettings {
-                free_move: true,
-            },
+            settings: GameSettings { free_move: true },
         })
     }
 

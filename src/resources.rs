@@ -1,8 +1,8 @@
 //! Game resource loading and management (e.g. Textures, Audio).
 use log::info;
 use sdl3::gpu::*;
-use sdl3::image::*;
 use sdl3::image::ImageIOStream;
+use sdl3::image::*;
 use sdl3::iostream::IOStream;
 use sdl3::pixels::PixelFormat;
 use sdl3::render::Canvas;
@@ -51,14 +51,17 @@ fn create_texture_from_image(
     copy_pass: &CopyPass,
 ) -> Result<Texture<'static>, Box<dyn std::error::Error>> {
     let io = IOStream::from_file(image_path, "r")?;
-    let image = io.load_png()?;
+    let mut image = io.load_png()?;
+    image.set_blend_mode(sdl3::render::BlendMode::Add);
 
     let image_size = image.size();
     let size_bytes = image.pixel_format().bytes_per_pixel() as u32 * image_size.0 * image_size.1;
 
+    info!("{}", image.pixel_format().is_alpha());
+
     let texture = gpu.create_texture(
         TextureCreateInfo::new()
-            .with_format(TextureFormat::R8g8b8a8UnormSrgb)
+            .with_format(TextureFormat::R8g8b8a8Unorm)
             .with_type(TextureType::_2D)
             .with_width(image_size.0)
             .with_height(image_size.1)

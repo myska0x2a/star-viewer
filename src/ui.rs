@@ -30,7 +30,10 @@ impl GameUi {
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
             GameEvent::StarRangeChanged(range, num) => {
-                self.star_renderer_status = StarRendererStatus { stars_loaded: num, range };
+                self.star_renderer_status = StarRendererStatus {
+                    stars_loaded: num,
+                    range,
+                };
                 Ok(())
             }
             _ => Ok(()),
@@ -46,13 +49,23 @@ impl GameUi {
                     ui.checkbox("Demo Window", &mut self.demo_window_opened);
                 });
                 ui.separator();
-                ui.text(format!("Range: {:2.2} Parsecs - {:.2} ly", self.star_renderer_status.range, self.star_renderer_status.range*PARSEC_LY as f32));
+                ui.text(format!(
+                    "Range: {:2.2} Parsecs - {:.2} ly",
+                    self.star_renderer_status.range,
+                    self.star_renderer_status.range * PARSEC_LY as f32
+                ));
                 ui.separator();
-                ui.text(format!("Stars Loaded: {}", self.star_renderer_status.stars_loaded));
+                ui.text(format!(
+                    "Stars Loaded: {}",
+                    self.star_renderer_status.stars_loaded
+                ));
 
                 ui.separator();
-                ui.text(format!("Vertices: {}", self.star_renderer_status.stars_loaded*6));
-            
+                ui.text(format!(
+                    "Vertices: {}",
+                    self.star_renderer_status.stars_loaded * 6
+                ));
+
                 let window = ui.window("miau");
             });
 
@@ -61,7 +74,7 @@ impl GameUi {
             //     .add_circle([700.0, 700.0], 150.0, [1.0, 0.0, 0.0])
             //     .thickness(4.0)
             //     .build();
-            
+
             if self.demo_window_opened {
                 ui.show_demo_window(&mut true);
             }
