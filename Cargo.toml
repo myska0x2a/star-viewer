@@ -16,6 +16,6 @@ kiddo = "5.3.0"
 log = { version = "0.4.29", features = ["max_level_info"] } 
 num-traits = "0.2.19"
 rand = "0.10.0"
-sdl3 = "0.17.3"
+sdl3 = { version = "0.17.3", features = ["image"] }
 serde = { version = "1.0.228", features = ["derive"] }
 std140 = "0.2.7"

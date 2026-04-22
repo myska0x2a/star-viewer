@@ -89,7 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        renderer.render(&mut sdl, &resources, gameui.render_ui(&ev_sendable, &mut gamecore))?;
+        renderer.render(&mut sdl, &resources, gameui.build_ui(&ev_sendable, &mut gamecore))?;
     }
 
     Ok(())

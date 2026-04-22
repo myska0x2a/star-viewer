@@ -8,5 +8,12 @@ pub enum GameEvent {
     StarSelected(String),
     StarRangeChanged(f32, usize),
     PositionChanged(f32),
+    Stars(Stars),
     Reload,
+}
+
+#[derive(Debug, Clone)]
+pub enum Stars {
+    RangeChanged(f32),
+    BufferUpdated(usize),
 }

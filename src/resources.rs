@@ -1,6 +1,11 @@
 //! Game resource loading and management (e.g. Textures, Audio).
 use log::info;
 use sdl3::gpu::*;
+use sdl3::image::*;
+use sdl3::image::ImageIOStream;
+use sdl3::iostream::IOStream;
+use sdl3::pixels::PixelFormat;
+use sdl3::render::Canvas;
 use sdl3::surface::Surface;
 use std::collections::HashMap;
 use std::path::Path;
@@ -18,16 +23,14 @@ impl ResourceManager {
         let copy_commands = device.acquire_command_buffer()?;
         let copy_pass = device.begin_copy_pass(&copy_commands)?;
 
-        let star_texture = create_texture_from_image(device, "assets/star.bmp", &copy_pass)?;
-        let sofia_texture = create_texture_from_image(device, "assets/sofia.bmp", &copy_pass)?;
+        let star_texture = create_texture_from_image(device, "assets/star.png", &copy_pass)?;
 
         device.end_copy_pass(copy_pass);
         copy_commands.submit()?;
 
         let mut textures = HashMap::new();
 
-        textures.insert("star.bmp", star_texture);
-        textures.insert("sofia.bmp", sofia_texture);
+        textures.insert("star.png", star_texture);
 
         Ok(Self {
             root: path,
@@ -47,7 +50,9 @@ fn create_texture_from_image(
     image_path: impl AsRef<Path>,
     copy_pass: &CopyPass,
 ) -> Result<Texture<'static>, Box<dyn std::error::Error>> {
-    let image = Surface::load_bmp(image_path.as_ref())?;
+    let io = IOStream::from_file(image_path, "r")?;
+    let image = io.load_png()?;
+
     let image_size = image.size();
     let size_bytes = image.pixel_format().bytes_per_pixel() as u32 * image_size.0 * image_size.1;
 

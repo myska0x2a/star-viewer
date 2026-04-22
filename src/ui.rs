@@ -37,24 +37,14 @@ impl GameUi {
         }
     }
 
-    // pub fn open_star_selection_window(&mut self, text: String) {
-    //     let starselectionwindow = StarSelectionWindow { nya: text };
-    //     self.starselectionwindow = Some(starselectionwindow);
-    // }
-
-    // pub fn close_star_selection_window(&mut self) {
-    //     self.starselectionwindow = None;
-    // }
-
-    pub fn render_ui(&mut self, ev: &EventSender, game: &mut GameCore) -> impl FnMut(&mut Ui) {
+    pub fn build_ui(&mut self, ev: &EventSender, game: &mut GameCore) -> impl FnMut(&mut Ui) {
         |ui| {
             let main_menu = ui.main_menu_bar(|| {
-                ui.menu("Settings", || {;
+                ui.menu("Settings", || {
                     // ui.text(format!("Free move: {}", game.settings.free_move));
                     ui.checkbox("Free Move", &mut game.settings.free_move);
                     ui.checkbox("Demo Window", &mut self.demo_window_opened);
                 });
-                
                 ui.separator();
                 ui.text(format!("Range: {:2.2} Parsecs - {:.2} ly", self.star_renderer_status.range, self.star_renderer_status.range*PARSEC_LY as f32));
                 ui.separator();
@@ -64,15 +54,6 @@ impl GameUi {
                 ui.text(format!("Vertices: {}", self.star_renderer_status.stars_loaded*6));
             
                 let window = ui.window("miau");
-
-                // let text = "haiiiii";
-                // let avail = ui.content_region_max()[0] - ui.calc_text_size(text)[0];
-                // ui.set_cursor_pos([avail, 0.0]);
-                // ui.text(text);
-
-                // ui.menu("Ooo menu :3", || {
-                //     ui.text("u found me! meow :3");
-                // });
             });
 
             // let draw = ui

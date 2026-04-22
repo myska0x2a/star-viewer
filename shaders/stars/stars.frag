@@ -11,5 +11,6 @@ layout (location = 0) out vec4 o_frag_color;
 void main() {
 	// o_frag_color = v_color;
 	// o_frag_color = vec4(1.f, 1.f, 1.f, 1.f);
-	o_frag_color = texture(tex_sampler, tex_coord) * v_color;
+	vec4 tex = texture(tex_sampler, tex_coord);
+	o_frag_color = tex * v_color * tex.w;
 }

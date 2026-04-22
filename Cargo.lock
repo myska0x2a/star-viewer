@@ -737,6 +737,16 @@ dependencies = [
  "bitflags 2.11.0",
  "lazy_static",
  "libc",
+ "sdl3-image-sys",
+ "sdl3-sys",
+]
+
+[[package]]
+name = "sdl3-image-sys"
+version = "0.6.1+SDL-image-3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f61a8cc9c72e2cab2e500752f513f65043ff1d36f994b90c7b423abcb796330d"
+dependencies = [
  "sdl3-sys",
 ]
 

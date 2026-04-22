@@ -72,7 +72,6 @@ impl<'a> GameRenderer<'a> {
         let device = Device::new(ShaderFormat::SPIRV, true)?.with_window(&mut window)?;
 
         let mut imgui = ImGuiSdl3::new(&device, &window, |ctx| {
-            // disable creation of files
             ctx.set_ini_filename(None);
             ctx.set_log_filename(None);
 
@@ -122,7 +121,7 @@ impl<'a> GameRenderer<'a> {
                 .with_texture(&swapchain)
                 .with_load_op(LoadOp::CLEAR)
                 .with_store_op(StoreOp::STORE)
-                .with_clear_color(Color::RGB(0, 0, 0))];
+                .with_clear_color(Color::RGB(128, 128, 128))];
 
             self.star_renderer.render(
                 &self.device,

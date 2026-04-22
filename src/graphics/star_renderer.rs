@@ -76,7 +76,7 @@ impl<'a> StarRenderer<'a> {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        let range = 0.0;
+        let range = 15.0;
 
         let (star_buffer, num_stars) = load_star_buffer(device, window, &star_handler, range)?;
 
@@ -140,21 +140,19 @@ impl<'a> StarRenderer<'a> {
             .begin_render_pass(&command_buffer, color_targets, Some(&depth_target))
             .unwrap();
 
-        let buffer = self.star_buffer.clone();
-
         render_pass.bind_graphics_pipeline(&self.pipeline);
-        render_pass.bind_vertex_storage_buffers(0, &[buffer]);
+        render_pass.bind_vertex_storage_buffers(0, &[self.star_buffer.clone()]);
 
-        let star_texture = resources.get_texture("star.bmp");
+        let star_texture = resources.get_texture("star.png");
 
         let texture_sampler = device.create_sampler(
             SamplerCreateInfo::new()
-                .with_min_filter(Filter::Nearest)
-                .with_mag_filter(Filter::Nearest)
-                .with_mipmap_mode(SamplerMipmapMode::Nearest)
-                .with_address_mode_u(SamplerAddressMode::Repeat)
-                .with_address_mode_v(SamplerAddressMode::Repeat)
-                .with_address_mode_w(SamplerAddressMode::Repeat),
+                // .with_min_filter(Filter::Nearest)
+                // .with_mag_filter(Filter::Nearest)
+                // .with_mipmap_mode(SamplerMipmapMode::Nearest)
+                // .with_address_mode_u(SamplerAddressMode::Repeat)
+                // .with_address_mode_v(SamplerAddressMode::Repeat)
+                // .with_address_mode_w(SamplerAddressMode::Repeat),
         )?;
 
         render_pass.bind_fragment_samplers(
@@ -165,8 +163,8 @@ impl<'a> StarRenderer<'a> {
         );
 
         command_buffer.push_vertex_uniform_data(0, &uniform_data);
-        render_pass.draw_primitives(self.num_stars * 6, self.num_stars * 2, 0, 0);
 
+        render_pass.draw_primitives(self.num_stars * 6, self.num_stars * 2, 0, 0);
         device.end_render_pass(render_pass);
 
         Ok(())
