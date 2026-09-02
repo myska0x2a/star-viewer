@@ -58,16 +58,16 @@ impl<'a> StarRenderer<'a> {
                     .with_depth_stencil_format(TextureFormat::D16Unorm)
                     .with_color_target_descriptions(&[ColorTargetDescription::new()
                         .with_format(swapchain_format)
-                        // .with_blend_state(
-                        //     ColorTargetBlendState::default()
-                        //         .with_enable_blend(true)
-                        //         .with_src_color_blendfactor(BlendFactor::One)
-                        //         .with_dst_color_blendfactor(BlendFactor::One)
-                        //         .with_src_alpha_blendfactor(BlendFactor::SrcAlpha)
-                        //         .with_dst_alpha_blendfactor(BlendFactor::DstAlpha)
-                        //         .with_alpha_blend_op(BlendOp::Add)
-                        //         .with_color_blend_op(BlendOp::Add),
-                        // )
+                        .with_blend_state(
+                            ColorTargetBlendState::default()
+                                .with_enable_blend(true)
+                                .with_src_color_blendfactor(BlendFactor::SrcColor)
+                                .with_dst_color_blendfactor(BlendFactor::OneMinusSrcColor)
+                                .with_src_alpha_blendfactor(BlendFactor::SrcAlpha)
+                                .with_dst_alpha_blendfactor(BlendFactor::OneMinusSrcAlpha)
+                                .with_alpha_blend_op(BlendOp::Add)
+                                .with_color_blend_op(BlendOp::Add),
+                        )
                     ]),
             )
             .build()?;
@@ -148,7 +148,8 @@ impl<'a> StarRenderer<'a> {
             .with_stencil_store_op(StoreOp::STORE);
 
         let render_pass = device
-            .begin_render_pass(&command_buffer, color_targets, Some(&depth_target))
+            // .begin_render_pass(&command_buffer, color_targets, Some(&depth_target))
+            .begin_render_pass(&command_buffer, color_targets, None)
             .unwrap();
 
         render_pass.bind_graphics_pipeline(&self.pipeline);
@@ -156,14 +157,7 @@ impl<'a> StarRenderer<'a> {
 
         let star_texture = resources.get_texture("star.png");
 
-        let texture_sampler = device.create_sampler(
-            SamplerCreateInfo::new(), // .with_min_filter(Filter::Nearest)
-                                      // .with_mag_filter(Filter::Nearest)
-                                      // .with_mipmap_mode(SamplerMipmapMode::Nearest)
-                                      // .with_address_mode_u(SamplerAddressMode::Repeat)
-                                      // .with_address_mode_v(SamplerAddressMode::Repeat)
-                                      // .with_address_mode_w(SamplerAddressMode::Repeat),
-        )?;
+        let texture_sampler = device.create_sampler(SamplerCreateInfo::new())?;
 
         render_pass.bind_fragment_samplers(
             0,

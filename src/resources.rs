@@ -1,4 +1,4 @@
-//! Game resource loading and management (e.g. Textures, Audio).
+//! App resource loading and management (e.g. Textures, Audio).
 use log::info;
 use sdl3::gpu::*;
 use sdl3::image::ImageIOStream;
@@ -23,7 +23,7 @@ impl ResourceManager {
         let copy_commands = device.acquire_command_buffer()?;
         let copy_pass = device.begin_copy_pass(&copy_commands)?;
 
-        let star_texture = create_texture_from_image(device, "assets/star.png", &copy_pass)?;
+        let star_texture = create_texture_from_image(device, "assets/star3.png", &copy_pass)?;
 
         device.end_copy_pass(copy_pass);
         copy_commands.submit()?;
@@ -52,7 +52,6 @@ fn create_texture_from_image(
 ) -> Result<Texture<'static>, Box<dyn std::error::Error>> {
     let io = IOStream::from_file(image_path, "r")?;
     let mut image = io.load_png()?;
-    image.set_blend_mode(sdl3::render::BlendMode::Add);
 
     let image_size = image.size();
     let size_bytes = image.pixel_format().bytes_per_pixel() as u32 * image_size.0 * image_size.1;

@@ -1,5 +1,5 @@
 //! User interface builder.
-use crate::{core::GameCore, event::*, stars::PARSEC_LY};
+use crate::{core::AppCore, event::*, stars::PARSEC_LY};
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
@@ -10,26 +10,26 @@ struct StarRendererStatus {
     range: f32,
 }
 
-pub struct GameUi {
+pub struct AppUi {
     star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
 }
 
-impl GameUi {
+impl AppUi {
     pub fn new() -> Self {
         info!("Init UI handler");
-        GameUi {
+        AppUi {
             star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
         }
     }
 
-    pub fn handle_game_event(
+    pub fn handle_app_event(
         &mut self,
-        event: GameEvent,
+        event: AppEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            GameEvent::StarRangeChanged(range, num) => {
+            AppEvent::StarRangeChanged(range, num) => {
                 self.star_renderer_status = StarRendererStatus {
                     stars_loaded: num,
                     range,
@@ -40,12 +40,12 @@ impl GameUi {
         }
     }
 
-    pub fn build_ui(&mut self, ev: &EventSender, game: &mut GameCore) -> impl FnMut(&mut Ui) {
+    pub fn build_ui(&mut self, ev: &EventSender, app: &mut AppCore) -> impl FnMut(&mut Ui) {
         |ui| {
             let main_menu = ui.main_menu_bar(|| {
                 ui.menu("Settings", || {
-                    // ui.text(format!("Free move: {}", game.settings.free_move));
-                    ui.checkbox("Free Move", &mut game.settings.free_move);
+                    // ui.text(format!("Free move: {}", app.settings.free_move));
+                    ui.checkbox("Free Move", &mut app.settings.free_move);
                     ui.checkbox("Demo Window", &mut self.demo_window_opened);
                 });
                 ui.separator();

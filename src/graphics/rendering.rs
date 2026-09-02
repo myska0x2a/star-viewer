@@ -46,7 +46,7 @@ impl Default for Camera {
     }
 }
 
-pub struct GameRenderer<'a> {
+pub struct AppRenderer<'a> {
     pub window: Window,
     pub device: Device,
     imgui: ImGuiSdl3,
@@ -55,14 +55,14 @@ pub struct GameRenderer<'a> {
     pub mousefocus: bool,
 }
 
-impl<'a> GameRenderer<'a> {
+impl<'a> AppRenderer<'a> {
     pub fn init(sdl: &Sdl, star_handler: &StarHandler) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Init renderer");
 
         let video_subsystem = sdl.video()?;
 
         let mut window = video_subsystem
-            .window("stars-game", 1000, 1000)
+            .window("stars-app", 1000, 1000)
             .fullscreen()
             .position_centered()
             .resizable()
@@ -76,7 +76,7 @@ impl<'a> GameRenderer<'a> {
             ctx.set_log_filename(None);
 
             let font = imgui::FontSource::TtfData {
-                data: include_bytes!("../../assets/ShareTechMono-Regular.ttf"),
+                data: include_bytes!("../../assets/ST-Spartak.otf"),
                 size_pixels: 20.0,
                 config: None,
             };
@@ -92,7 +92,7 @@ impl<'a> GameRenderer<'a> {
         let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
         // star_renderer.reload(&device, &window, 10.0)?;
 
-        return Ok(GameRenderer {
+        return Ok(AppRenderer {
             window,
             device,
             imgui,
@@ -212,12 +212,12 @@ impl<'a> GameRenderer<'a> {
         Ok(())
     }
 
-    pub fn handle_game_event(
+    pub fn handle_app_event(
         &mut self,
-        event: GameEvent,
+        event: AppEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            GameEvent::PositionChanged(position) => {
+            AppEvent::PositionChanged(position) => {
                 self.camera.pos[0] = position;
                 Ok(())
             }

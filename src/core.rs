@@ -1,46 +1,42 @@
-//! Game logic manager.
+//! App logic manager.
 use crate::event::*;
-use crate::fleet::*;
-use crate::graphics::rendering::GameRenderer;
+use crate::graphics::rendering::AppRenderer;
 use crate::stars::*;
-use crate::util::*;
 use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
 
-pub struct GameSettings {
+pub struct AppSettings {
     pub free_move: bool,
 }
 
-pub struct GameCore {
+pub struct AppCore {
     pub star_handler: StarHandler,
-    pub fleet_handler: FleetHandler,
-    pub settings: GameSettings,
+    pub settings: AppSettings,
 }
 
-impl GameCore {
+impl AppCore {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        info!("Init game core...");
-        Ok(GameCore {
+        info!("Init app core...");
+        Ok(AppCore {
             star_handler: StarHandler::new(),
-            fleet_handler: FleetHandler::new(),
-            settings: GameSettings { free_move: true },
+            settings: AppSettings { free_move: true },
         })
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Load game core...");
+        info!("Load app core...");
         self.star_handler
             .load(String::from("data/hygdata_v41.csv"))?;
         Ok(())
     }
 
-    pub fn handle_game_event(
+    pub fn handle_app_event(
         &mut self,
-        event: GameEvent,
+        event: AppEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match event {
-            GameEvent::Reload => {
+            AppEvent::Reload => {
                 self.star_handler
                     .load(String::from("data/hygdata_v41-reduced.csv"))?;
                 Ok(())
