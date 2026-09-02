@@ -1,5 +1,5 @@
 //! User interface builder.
-use crate::{core::AppCore, event::*, stars::PARSEC_LY};
+use crate::{core::{AppCore, Camera}, stars::{PARSEC_LY, *}};
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
@@ -13,6 +13,7 @@ struct StarRendererStatus {
 pub struct AppUi {
     star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
+    free_move: bool,
 }
 
 impl AppUi {
@@ -21,31 +22,27 @@ impl AppUi {
         AppUi {
             star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
+            free_move: true,
         }
     }
 
-    pub fn handle_app_event(
-        &mut self,
-        event: AppEvent,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        match event {
-            AppEvent::StarRangeChanged(range, num) => {
-                self.star_renderer_status = StarRendererStatus {
-                    stars_loaded: num,
-                    range,
-                };
-                Ok(())
-            }
-            _ => Ok(()),
-        }
+    pub fn updateSelectedStar(&self, star: Star) -> () {
+        
     }
 
-    pub fn build_ui(&mut self, ev: &EventSender, app: &mut AppCore) -> impl FnMut(&mut Ui) {
+    pub fn cameraUpdated(&self, camera: Camera) -> () {
+
+    }
+
+    pub fn starRendererUpdated(&mut self, stars_loaded: usize, range: f32) -> () {
+        self.star_renderer_status = StarRendererStatus { stars_loaded, range };
+    }
+
+    pub fn build_ui(&mut self) -> impl FnMut(&mut Ui) {
         |ui| {
             let main_menu = ui.main_menu_bar(|| {
                 ui.menu("Settings", || {
-                    // ui.text(format!("Free move: {}", app.settings.free_move));
-                    ui.checkbox("Free Move", &mut app.settings.free_move);
+                    ui.checkbox("Free Move", &mut self.free_move);
                     ui.checkbox("Demo Window", &mut self.demo_window_opened);
                 });
                 ui.separator();

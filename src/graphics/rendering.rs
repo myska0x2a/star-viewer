@@ -1,5 +1,5 @@
 //! Rendering manager.
-use crate::event::*;
+use crate::core::{AppCore, Camera};
 use crate::graphics::star_renderer::StarRenderer;
 use crate::resources::ResourceManager;
 use crate::stars::*;
@@ -13,45 +13,13 @@ use imgui_sdl3::ImGuiSdl3;
 use sdl3::keyboard::Keycode::*;
 use sdl3::{Sdl, event::Event, gpu::*, pixels::Color, video::Window};
 
-#[derive(Copy, Clone)]
-pub struct Camera {
-    pub pos: [f32; 3],
-    pub orientation: [f32; 3],
-    pub velocity: [f32; 3],
-    pub fov: f32,
-}
-
-impl Camera {
-    pub fn increment_pos(&mut self, x: f32, y: f32, z: f32) {
-        self.orientation[0] += x;
-        self.orientation[1] += y;
-        self.orientation[2] += z;
-    }
-
-    pub fn increment_vel(&mut self) {
-        self.pos[0] += self.velocity[0];
-        self.pos[1] += self.velocity[1];
-        self.pos[2] += self.velocity[2];
-    }
-}
-
-impl Default for Camera {
-    fn default() -> Self {
-        return Camera {
-            pos: [0.0, 0.0, 0.0],
-            orientation: [0.0, 0.0, 0.0],
-            velocity: [0.0, 0.0, 0.0],
-            fov: 3.0,
-        };
-    }
-}
 
 pub struct AppRenderer<'a> {
     pub window: Window,
     pub device: Device,
-    imgui: ImGuiSdl3,
+    pub imgui: ImGuiSdl3,
     pub star_renderer: StarRenderer<'a>,
-    pub camera: Camera,
+    // pub camera: Camera,
     pub mousefocus: bool,
 }
 
@@ -97,7 +65,7 @@ impl<'a> AppRenderer<'a> {
             device,
             imgui,
             star_renderer,
-            camera: Camera::default(),
+            // camera: Camera::default(),
             mousefocus: true,
         });
     }
@@ -106,6 +74,7 @@ impl<'a> AppRenderer<'a> {
         &mut self,
         sdl: &mut Sdl,
         resources: &ResourceManager,
+        camera: &Camera,
         ui_callback: impl FnMut(&mut Ui),
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event = sdl.event_pump()?;
@@ -131,7 +100,7 @@ impl<'a> AppRenderer<'a> {
                 &self.window,
                 &mut command_buffer,
                 &star_color_target,
-                &mut self.camera,
+                &camera,
                 resources,
             )?;
 
@@ -154,43 +123,43 @@ impl<'a> AppRenderer<'a> {
         Ok(())
     }
 
-    pub fn handle_ui_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
-        self.imgui.handle_event(&event);
+    // pub fn handle_ui_event(&mut self, event: &Event) -> Result<(), Box<dyn std::error::Error>> {
+    //     self.imgui.handle_event(&event);
 
-        if self.mousefocus {
-            match event {
-                Event::KeyDown { keycode, .. } => {
-                    // x
-                    if keycode == &Some(A) {
-                        self.camera.velocity[0] = -0.1;
-                    }
-                    if keycode == &Some(D) {
-                        self.camera.velocity[0] = 0.1;
-                    }
-                    // y
-                    if keycode == &Some(W) {
-                        self.camera.velocity[1] = -0.1;
-                    }
-                    if keycode == &Some(S) {
-                        self.camera.velocity[1] = 0.1;
-                    }
-                    // z
-                    if keycode == &Some(E) {
-                        self.camera.velocity[2] = 0.1;
-                    }
-                    if keycode == &Some(Q) {
-                        self.camera.velocity[2] = -0.1;
-                    }
-                }
+    //     if self.mousefocus {
+    //         match event {
+    //             Event::KeyDown { keycode, .. } => {
+    //                 // x
+    //                 if keycode == &Some(A) {
+    //                     self.camera.velocity[0] = -0.1;
+    //                 }
+    //                 if keycode == &Some(D) {
+    //                     self.camera.velocity[0] = 0.1;
+    //                 }
+    //                 // y
+    //                 if keycode == &Some(W) {
+    //                     self.camera.velocity[1] = -0.1;
+    //                 }
+    //                 if keycode == &Some(S) {
+    //                     self.camera.velocity[1] = 0.1;
+    //                 }
+    //                 // z
+    //                 if keycode == &Some(E) {
+    //                     self.camera.velocity[2] = 0.1;
+    //                 }
+    //                 if keycode == &Some(Q) {
+    //                     self.camera.velocity[2] = -0.1;
+    //                 }
+    //             }
 
-                Event::KeyUp { .. } => {
-                    self.camera.velocity = [0.0, 0.0, 0.0];
-                }
+    //             Event::KeyUp { .. } => {
+    //                 self.camera.velocity = [0.0, 0.0, 0.0];
+    //             }
 
-                Event::MouseMotion { xrel, yrel, .. } => {
-                    self.camera.orientation[2] += xrel / 400.0;
-                    self.camera.orientation[1] += yrel / 400.0;
-                }
+    //             Event::MouseMotion { xrel, yrel, .. } => {
+    //                 self.camera.orientation[2] += xrel / 400.0;
+    //                 self.camera.orientation[1] += yrel / 400.0;
+    //             }
 
                 // Event::MouseWheel { x, y, .. } => {
                 //     let new_fov = self.camera.fov + (y / 10.0);
@@ -205,25 +174,25 @@ impl<'a> AppRenderer<'a> {
                 //         )?;
                 //     }
                 // }
-                _ => {}
-            }
-        }
+                // _ => {}
+            // }
+        // }
 
-        Ok(())
-    }
+        // Ok(())
+    // }
 
-    pub fn handle_app_event(
-        &mut self,
-        event: AppEvent,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        match event {
-            AppEvent::PositionChanged(position) => {
-                self.camera.pos[0] = position;
-                Ok(())
-            }
-            _ => Ok(()),
-        }
-    }
+    // pub fn handle_app_event(
+        // &mut self,
+        // event: AppEvent,
+    // ) -> Result<(), Box<dyn std::error::Error>> {
+        // match event {
+            // AppEvent::PositionChanged(position) => {
+                // self.camera.pos[0] = position;
+                // Ok(())
+            // }
+            // _ => Ok(()),
+        // }
+    // }
 
     pub fn close(self) -> Result<(), Box<dyn std::error::Error>> {
         let mut command_buffer = self.device.acquire_command_buffer()?;

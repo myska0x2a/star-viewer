@@ -3,6 +3,7 @@ use crate::stars::*;
 use crate::{graphics::rendering::*, resources::ResourceManager};
 use cgmath::{Matrix4, PerspectiveFov, Rad};
 use log::info;
+use crate::core::{AppCore, Camera};
 use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
 
 pub struct StarRenderer<'a> {
@@ -107,10 +108,9 @@ impl<'a> StarRenderer<'a> {
         window: &Window,
         command_buffer: &CommandBuffer,
         color_targets: &[ColorTargetInfo; 1],
-        camera: &mut Camera,
+        camera: &Camera,
         resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        camera.increment_vel();
 
         #[allow(unused)]
         #[repr(align(16))]

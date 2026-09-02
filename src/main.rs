@@ -4,7 +4,6 @@ use log::info;
 use sdl3::event::*;
 use sdl3::keyboard::Keycode;
 use starviewer::core::AppCore;
-use starviewer::event::*;
 use starviewer::graphics::rendering::*;
 use starviewer::resources::ResourceManager;
 use starviewer::ui::*;
@@ -30,14 +29,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resources = ResourceManager::load(&renderer.device, ".")?;
 
     let ev = sdl.event()?;
-    ev.register_custom_event::<AppEvent>()?;
     let ev_sendable = ev.event_sender();
 
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
-            // this should not be handled by the renderer directly. an input handler
-            // will need to be created which abstracts inputs into app events.
-            renderer.handle_ui_event(&event)?;
+            renderer.imgui.handle_event(&event);
 
             match event {
                 Event::Quit { .. } => {
@@ -58,43 +54,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         mouse.set_relative_mouse_mode(&renderer.window, false);
                     }
                 }
-
-                Event::MouseWheel { x, y, .. } => {
-                    if renderer.mousefocus {
-                        let new_fov = renderer.camera.fov + (y / 10.0);
-                        renderer.camera.fov = new_fov.clamp(0.0000001, 3.14);
-                    }
-                    if x != 0.0f32 {
-                        renderer.star_renderer.range =
-                            (renderer.star_renderer.range + x).clamp(0.2, 9999999.0);
-                        renderer.star_renderer.reload(
-                            &renderer.device,
-                            &renderer.window,
-                            renderer.star_renderer.range,
-                        )?;
-
-                        ev.push_custom_event(AppEvent::StarRangeChanged(
-                            renderer.star_renderer.range,
-                            renderer.star_renderer.num_stars,
-                        ))?;
-                    }
-                }
-
-                Event::User { .. } => {
-                    let event_user = event.as_user_event_type::<AppEvent>().unwrap();
-
-                    appcore.handle_app_event(event_user.clone())?;
-                    appui.handle_app_event(event_user.clone())?;
-                    renderer.handle_app_event(event_user.clone())?;
-                }
                 _ => {}
             }
         }
 
+        let ui_callback = appui.build_ui();
+
         renderer.render(
             &mut sdl,
             &resources,
-            appui.build_ui(&ev_sendable, &mut appcore),
+            &appcore.camera.clone(),
+            ui_callback,
         )?;
     }
 
