@@ -1,9 +1,9 @@
 //! Module for the rendering of stars specifically.
+use crate::core::{AppCore, Camera};
 use crate::stars::*;
 use crate::{graphics::rendering::*, resources::ResourceManager};
-use cgmath::{Matrix4, PerspectiveFov, Rad};
+use cgmath::{Matrix4, PerspectiveFov, Rad, Vector3};
 use log::info;
-use crate::core::{AppCore, Camera};
 use sdl3::{gpu::TransferBufferUsage, gpu::*, video::Window};
 
 pub struct StarRenderer<'a> {
@@ -68,8 +68,7 @@ impl<'a> StarRenderer<'a> {
                                 .with_dst_alpha_blendfactor(BlendFactor::OneMinusSrcAlpha)
                                 .with_alpha_blend_op(BlendOp::Add)
                                 .with_color_blend_op(BlendOp::Add),
-                        )
-                    ]),
+                        )]),
             )
             .build()?;
 
@@ -111,14 +110,13 @@ impl<'a> StarRenderer<'a> {
         camera: &Camera,
         resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
-
         #[allow(unused)]
         #[repr(align(16))]
         #[derive(Copy, Clone)]
         struct UniformData {
             projection_matrix: Matrix4<f32>,
-            position: [f32; 3],
-            rotation: [f32; 3],
+            position: Vector3<f32>,
+            rotation: Vector3<f32>,
         }
 
         let window_size = window.size();
@@ -128,7 +126,7 @@ impl<'a> StarRenderer<'a> {
             fovy: fov,
             aspect: window_size.0 as f32 / window_size.1 as f32,
             near: 0.1,
-            far: 300.0,
+            far: 1.0,
         };
 
         let uniform_data = UniformData {

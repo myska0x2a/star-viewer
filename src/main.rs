@@ -28,8 +28,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut renderer = AppRenderer::init(&sdl, appcore.get_star_handler())?;
     let resources = ResourceManager::load(&renderer.device, ".")?;
 
-    let ev = sdl.event()?;
-    let ev_sendable = ev.event_sender();
+    let mut mousefocus: bool = true;
+    appcore.camera.sensitivity = 0.005;
 
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
@@ -42,30 +42,86 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     break 'main;
                 }
 
+                Event::MouseMotion {
+                    timestamp,
+                    window_id,
+                    which,
+                    mousestate,
+                    x,
+                    y,
+                    xrel,
+                    yrel,
+                } => {
+                    if mousefocus {
+                        if xrel != 0.0f32 {
+                            appcore.camera.rotate(0.0, 0.0, xrel);
+                        }
+                        if yrel != 0.0f32 {
+                            appcore.camera.rotate(0.0, yrel, 0.0);
+                        }
+                    }
+                }
+                Event::MouseWheel { x, y, .. } => {
+                    // fov control
+                    if mousefocus && (y != 0.0f32) {
+                        let new_fov = appcore.camera.fov + (y / 10.0);
+                        appcore.camera.fov = new_fov.clamp(0.0000001, 3.14);
+                    }
+
+                    // range changing
+                    if x != 0.0f32 {
+                        renderer.star_renderer.range =
+                            (renderer.star_renderer.range + x).clamp(0.2, 9999999.0);
+                        renderer.star_renderer.reload(
+                            &renderer.device,
+                            &renderer.window,
+                            renderer.star_renderer.range,
+                        )?;
+                    }
+                }
+
                 Event::KeyDown { keycode, .. } => {
                     let mouse = sdl.mouse();
 
                     if keycode == Some(Keycode::Return) {
-                        renderer.mousefocus = true;
+                        mousefocus = true;
                         mouse.set_relative_mouse_mode(&renderer.window, true);
                     }
                     if keycode == Some(Keycode::Escape) {
-                        renderer.mousefocus = false;
+                        mousefocus = false;
                         mouse.set_relative_mouse_mode(&renderer.window, false);
                     }
+
+                    // // x
+                    // if keycode == Some(Keycode::A) {
+                    //     appcore.camera.translate(-0.1, 0.0, 0.0);
+                    // }
+                    // if keycode == Some(Keycode::D) {
+                    //     appcore.camera.translate(0.1, 0.0, 0.0);
+                    // }
+                    // // y
+                    // if keycode == Some(Keycode::W) {
+                    //     appcore.camera.pos[1] += -0.1;
+                    //     appcore.camera.translate(0.0, -0.1, 0.0);
+                    // }
+                    // if keycode == Some(Keycode::S) {
+                    //     appcore.camera.translate(0.0, 0.1, 0.0);
+                    // }
+                    // // z
+                    // if keycode == Some(Keycode::E) {
+                    //     appcore.camera.translate(0.0, 0.0, 0.1);
+                    // }
+                    // if keycode == Some(Keycode::Q) {
+                    //     appcore.camera.translate(0.0, 0.0, -0.1);
+                    // }
                 }
                 _ => {}
             }
         }
 
-        let ui_callback = appui.build_ui();
+        // let ui_callback = appui.build_ui(&mut appcore);
 
-        renderer.render(
-            &mut sdl,
-            &resources,
-            &appcore.camera.clone(),
-            ui_callback,
-        )?;
+        renderer.render(&mut sdl, &resources, &mut appcore, &mut appui)?;
     }
 
     Ok(())

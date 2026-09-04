@@ -4,40 +4,45 @@ use crate::stars::*;
 use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
+use cgmath::{ Vector3, Matrix3 };
 
 #[derive(Copy, Clone)]
 pub struct Camera {
-    pub pos: [f32; 3],
-    pub orientation: [f32; 3],
-    pub velocity: [f32; 3],
+    // pub pos: [f32; 3],
+    pub pos: Vector3<f32>,
+    pub orientation: Vector3<f32>,
+    pub sensitivity: f32,
     pub fov: f32,
 }
 
 impl Camera {
-    pub fn increment_pos(&mut self, x: f32, y: f32, z: f32) {
-        self.orientation[0] += x;
-        self.orientation[1] += y;
-        self.orientation[2] += z;
+    pub fn rotate(&mut self, x: f32, y: f32, z: f32) {
+        self.orientation[0] += x*self.sensitivity;
+        self.orientation[1] += y*self.sensitivity;
+        self.orientation[2] += z*self.sensitivity;
+
     }
 
-    pub fn increment_vel(&mut self) {
-        self.pos[0] += self.velocity[0];
-        self.pos[1] += self.velocity[1];
-        self.pos[2] += self.velocity[2];
+    pub fn translate(&mut self, x: f32, y: f32, z: f32) {
+        // unitx = self.orientation[0];
+
+
+        self.pos[0] += x;
+        self.pos[1] += y;
+        self.pos[2] += z;
     }
 }
 
 impl Default for Camera {
     fn default() -> Self {
         return Camera {
-            pos: [0.0, 0.0, 0.0],
-            orientation: [0.0, 0.0, 0.0],
-            velocity: [0.0, 0.0, 0.0],
+            pos: Vector3::new(0.0, 0.0, 0.0),
+            orientation: Vector3::new(0.0, 0.0, 0.0),
+            sensitivity: 1.0,
             fov: 3.0,
         };
     }
 }
-
 
 pub struct AppSettings {
     pub free_move: bool,

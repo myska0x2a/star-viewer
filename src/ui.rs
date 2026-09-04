@@ -1,5 +1,8 @@
 //! User interface builder.
-use crate::{core::{AppCore, Camera}, stars::{PARSEC_LY, *}};
+use crate::{
+    core::{AppCore, Camera},
+    stars::{PARSEC_LY, *},
+};
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
@@ -26,19 +29,18 @@ impl AppUi {
         }
     }
 
-    pub fn updateSelectedStar(&self, star: Star) -> () {
-        
-    }
+    pub fn updateSelectedStar(&self, star: Star) -> () {}
 
-    pub fn cameraUpdated(&self, camera: Camera) -> () {
-
-    }
+    pub fn cameraUpdated(&self, camera: Camera) -> () {}
 
     pub fn starRendererUpdated(&mut self, stars_loaded: usize, range: f32) -> () {
-        self.star_renderer_status = StarRendererStatus { stars_loaded, range };
+        self.star_renderer_status = StarRendererStatus {
+            stars_loaded,
+            range,
+        };
     }
 
-    pub fn build_ui(&mut self) -> impl FnMut(&mut Ui) {
+    pub fn build_ui(&mut self, appcore: &mut AppCore) -> impl FnMut(&mut Ui) {
         |ui| {
             let main_menu = ui.main_menu_bar(|| {
                 ui.menu("Settings", || {
@@ -63,6 +65,8 @@ impl AppUi {
                     self.star_renderer_status.stars_loaded * 6
                 ));
 
+                ui.slider("camera zoom", 0.1, 3.10, &mut appcore.camera.fov);
+
                 let window = ui.window("miau");
             });
 
@@ -75,6 +79,21 @@ impl AppUi {
             if self.demo_window_opened {
                 ui.show_demo_window(&mut true);
             }
+
+
+            if ui.is_key_down(imgui::Key::W) {
+                appcore.camera.translate(0.0, 0.0, -0.1);
+            }
+            if ui.is_key_down(imgui::Key::S) {
+                appcore.camera.translate(0.0, 0.0, 0.1);
+            }
+            if ui.is_key_down(imgui::Key::A) {
+                appcore.camera.translate(-0.1, 0.0, 0.0);
+            }
+            if ui.is_key_down(imgui::Key::D) {
+                appcore.camera.translate(0.1, 0.0, 0.0);
+            }
+
         }
     }
 }
