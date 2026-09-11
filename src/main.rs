@@ -91,35 +91,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         mousefocus = false;
                         mouse.set_relative_mouse_mode(&renderer.window, false);
                     }
-
-                    // // x
-                    // if keycode == Some(Keycode::A) {
-                    //     appcore.camera.translate(-0.1, 0.0, 0.0);
-                    // }
-                    // if keycode == Some(Keycode::D) {
-                    //     appcore.camera.translate(0.1, 0.0, 0.0);
-                    // }
-                    // // y
-                    // if keycode == Some(Keycode::W) {
-                    //     appcore.camera.pos[1] += -0.1;
-                    //     appcore.camera.translate(0.0, -0.1, 0.0);
-                    // }
-                    // if keycode == Some(Keycode::S) {
-                    //     appcore.camera.translate(0.0, 0.1, 0.0);
-                    // }
-                    // // z
-                    // if keycode == Some(Keycode::E) {
-                    //     appcore.camera.translate(0.0, 0.0, 0.1);
-                    // }
-                    // if keycode == Some(Keycode::Q) {
-                    //     appcore.camera.translate(0.0, 0.0, -0.1);
-                    // }
                 }
                 _ => {}
             }
         }
-
-        // let ui_callback = appui.build_ui(&mut appcore);
 
         renderer.render(&mut sdl, &resources, &mut appcore, &mut appui)?;
     }

@@ -22,16 +22,17 @@ pub struct Camera {
 
 impl Camera {
     pub fn rotate(&mut self, x: f32, y: f32, z: f32) {
-        if ( (self.orientation.y > -PI) && (self.orientation.y < PI) )  || (self.orientation.y*y < 0.0) {
+        if ((self.orientation.y > -PI) && (self.orientation.y < PI))
+            || (self.orientation.y * y < 0.0)
+        {
             self.orientation.y += y * self.sensitivity;
-        } 
+        }
 
         // if ( (self.orientation.z > -0.01) && (self.orientation.z < 2.0*PI) ) || (self.orientation.z*z < 0.0) {
         //     self.orientation.z += z * self.sensitivity;
-        // } 
+        // }
 
         self.orientation.z += z * self.sensitivity;
-
 
         println!(
             "Rotation: {} x {} y {} z",
@@ -51,7 +52,7 @@ impl Camera {
         // let roty = PI/4.0;
         // let rotz = PI/2.0;
 
-        println!("Angles: {} x {} y {} z", rotx/PI, roty/PI, rotz/PI);
+        println!("Angles: {} x {} y {} z", rotx / PI, roty / PI, rotz / PI);
 
         let rotmatx = Basis3::<f32>::from_angle_x(Rad(rotx));
         let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
@@ -59,12 +60,14 @@ impl Camera {
 
         let mut translation_unit = Vector3 { x, y, z };
 
-        println!("Input: {} x {} y {} z", translation_unit.x, translation_unit.y, translation_unit.z);
+        println!(
+            "Input: {} x {} y {} z",
+            translation_unit.x, translation_unit.y, translation_unit.z
+        );
 
         // translation_unit = rotmatz.rotate_vector(translation_unit);
         translation_unit = rotmatx.rotate_vector(translation_unit);
         translation_unit = rotmaty.rotate_vector(translation_unit);
-
 
         // let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
         // translation_unit = rotmaty.rotate_vector(translation_unit);
@@ -77,7 +80,6 @@ impl Camera {
             "Output: {} x {} y {} z",
             translation_unit.x, translation_unit.y, translation_unit.z
         );
-
     }
 }
 

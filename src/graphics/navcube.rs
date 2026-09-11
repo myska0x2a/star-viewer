@@ -1,4 +1,11 @@
+use crate::core::{AppCore, Camera};
+use crate::graphics::rendering::create_buffer_with_data;
+use crate::stars::*;
+use crate::{graphics::rendering::*, resources::ResourceManager};
+use cgmath::{Matrix4, PerspectiveFov, Rad, Vector3};
+use log::info;
 use sdl3::{
+    Error,
     event::Event,
     gpu::{
         Buffer, BufferBinding, BufferRegion, BufferUsageFlags, ColorTargetDescription,
@@ -13,17 +20,9 @@ use sdl3::{
     keyboard::Keycode,
     pixels::Color,
     surface::Surface,
-    Error,
 };
+use sdl3::{gpu::*, video::Window};
 use std::path::Path;
-use crate::graphics::rendering::create_buffer_with_data;
-use crate::core::{AppCore, Camera};
-use crate::stars::*;
-use crate::{graphics::rendering::*, resources::ResourceManager};
-use cgmath::{Matrix4, PerspectiveFov, Rad, Vector3};
-use log::info;
-use sdl3::{ gpu::*, video::Window};
-
 
 #[repr(packed)]
 #[derive(Copy, Clone)]
@@ -188,18 +187,13 @@ const CUBE_INDICES: &[u16] = &[
         // not bothering with bottom since it's not visible
 ];
 
-
 pub struct CubeRenderer {
     pipeline: GraphicsPipeline,
     rotation: f32,
 }
 
 impl CubeRenderer {
-    pub fn load(
-        device: &Device,
-        window: &Window,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-
+    pub fn load(device: &Device, window: &Window) -> Result<Self, Box<dyn std::error::Error>> {
         println!("meow");
         let fs_source = include_bytes!("../../shaders/cube/*.frag.spv");
         let vs_source = include_bytes!("../../shaders/cube/*.vert.spv");
@@ -345,7 +339,6 @@ impl CubeRenderer {
         camera: &Camera,
         resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
-
         Ok(())
     }
 }

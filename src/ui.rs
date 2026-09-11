@@ -77,13 +77,10 @@ impl AppUi {
                 ui.separator();
                 ui.text(format!(
                     "camera xyz: ({:.2}, {:.2}, {:.2})",
-                    appcore.camera.pos.x,
-                    appcore.camera.pos.y,
-                    appcore.camera.pos.z,
+                    appcore.camera.pos.x, appcore.camera.pos.y, appcore.camera.pos.z,
                 ));
                 ui.separator();
                 ui.text(format!("camera zoom: {:.2}", appcore.camera.fov));
-
 
                 let window = ui.window("miau");
             });
@@ -100,18 +97,22 @@ impl AppUi {
 
             let speed_boost = 1.0;
             let base_speed = 0.073;
-            
+
             if ui.is_key_down(imgui::Key::W) {
-                appcore.camera.translate(0.0, 0.0, -base_speed*speed_boost);
+                appcore
+                    .camera
+                    .translate(0.0, 0.0, -base_speed * speed_boost);
             }
             if ui.is_key_down(imgui::Key::S) {
-                appcore.camera.translate(0.0, 0.0, base_speed*speed_boost);
+                appcore.camera.translate(0.0, 0.0, base_speed * speed_boost);
             }
             if ui.is_key_down(imgui::Key::A) {
-                appcore.camera.translate(-base_speed*speed_boost, 0.0, 0.0);
+                appcore
+                    .camera
+                    .translate(-base_speed * speed_boost, 0.0, 0.0);
             }
             if ui.is_key_down(imgui::Key::D) {
-                appcore.camera.translate(base_speed*speed_boost, 0.0, 0.0);
+                appcore.camera.translate(base_speed * speed_boost, 0.0, 0.0);
             }
         }
     }

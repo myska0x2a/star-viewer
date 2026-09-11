@@ -1,7 +1,7 @@
 //! Rendering manager.
 use crate::core::{AppCore, Camera};
-use crate::graphics::star_renderer::StarRenderer;
 use crate::graphics::navcube::CubeRenderer;
+use crate::graphics::star_renderer::StarRenderer;
 use crate::resources::ResourceManager;
 use crate::stars::*;
 use crate::ui::AppUi;
