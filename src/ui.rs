@@ -6,6 +6,7 @@ use crate::{
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
+use std::f32::consts::PI;
 
 #[derive(Default)]
 struct StarRendererStatus {
@@ -65,7 +66,24 @@ impl AppUi {
                     self.star_renderer_status.stars_loaded * 6
                 ));
 
-                ui.slider("camera zoom", 0.1, 3.10, &mut appcore.camera.fov);
+                // ui.slider("camera zoom", 0.1, 3.10, &mut appcore.camera.fov);
+                ui.separator();
+                ui.text(format!(
+                    "camera orientation : ({:.2}°x, {:.2}°y, {:.2}°z)",
+                    appcore.camera.orientation.x * (180.0 / PI),
+                    appcore.camera.orientation.y * (180.0 / PI),
+                    appcore.camera.orientation.z * (180.0 / PI)
+                ));
+                ui.separator();
+                ui.text(format!(
+                    "camera xyz: ({:.2}, {:.2}, {:.2})",
+                    appcore.camera.pos.x,
+                    appcore.camera.pos.y,
+                    appcore.camera.pos.z,
+                ));
+                ui.separator();
+                ui.text(format!("camera zoom: {:.2}", appcore.camera.fov));
+
 
                 let window = ui.window("miau");
             });
@@ -80,20 +98,21 @@ impl AppUi {
                 ui.show_demo_window(&mut true);
             }
 
-
+            let speed_boost = 1.0;
+            let base_speed = 0.073;
+            
             if ui.is_key_down(imgui::Key::W) {
-                appcore.camera.translate(0.0, 0.0, -0.1);
+                appcore.camera.translate(0.0, 0.0, -base_speed*speed_boost);
             }
             if ui.is_key_down(imgui::Key::S) {
-                appcore.camera.translate(0.0, 0.0, 0.1);
+                appcore.camera.translate(0.0, 0.0, base_speed*speed_boost);
             }
             if ui.is_key_down(imgui::Key::A) {
-                appcore.camera.translate(-0.1, 0.0, 0.0);
+                appcore.camera.translate(-base_speed*speed_boost, 0.0, 0.0);
             }
             if ui.is_key_down(imgui::Key::D) {
-                appcore.camera.translate(0.1, 0.0, 0.0);
+                appcore.camera.translate(base_speed*speed_boost, 0.0, 0.0);
             }
-
         }
     }
 }

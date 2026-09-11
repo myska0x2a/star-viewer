@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Event::MouseWheel { x, y, .. } => {
                     // fov control
                     if mousefocus && (y != 0.0f32) {
-                        let new_fov = appcore.camera.fov + (y / 10.0);
+                        let new_fov = appcore.camera.fov + (y / 40.0);
                         appcore.camera.fov = new_fov.clamp(0.0000001, 3.14);
                     }
 

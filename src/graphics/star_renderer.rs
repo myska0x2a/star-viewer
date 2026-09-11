@@ -125,8 +125,8 @@ impl<'a> StarRenderer<'a> {
         let projection_matrix = PerspectiveFov {
             fovy: fov,
             aspect: window_size.0 as f32 / window_size.1 as f32,
-            near: 0.1,
-            far: 1.0,
+            near: 0.01,
+            far: 1.1,
         };
 
         let uniform_data = UniformData {

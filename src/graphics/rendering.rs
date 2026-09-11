@@ -1,6 +1,7 @@
 //! Rendering manager.
 use crate::core::{AppCore, Camera};
 use crate::graphics::star_renderer::StarRenderer;
+use crate::graphics::navcube::CubeRenderer;
 use crate::resources::ResourceManager;
 use crate::stars::*;
 use crate::ui::AppUi;
@@ -19,6 +20,7 @@ pub struct AppRenderer<'a> {
     pub device: Device,
     pub imgui: ImGuiSdl3,
     pub star_renderer: StarRenderer<'a>,
+    pub cube_renderer: CubeRenderer,
     // pub camera: Camera,
     pub mousefocus: bool,
 }
@@ -58,6 +60,7 @@ impl<'a> AppRenderer<'a> {
         mouse.set_relative_mouse_mode(&window, true);
 
         let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
+        let mut cube_renderer = CubeRenderer::load(&device, &window)?;
         // star_renderer.reload(&device, &window, 10.0)?;
 
         return Ok(AppRenderer {
@@ -65,6 +68,7 @@ impl<'a> AppRenderer<'a> {
             device,
             imgui,
             star_renderer,
+            cube_renderer,
             // camera: Camera::default(),
             mousefocus: true,
         });
