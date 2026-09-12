@@ -30,17 +30,6 @@ impl AppUi {
         }
     }
 
-    pub fn updateSelectedStar(&self, star: Star) -> () {}
-
-    pub fn cameraUpdated(&self, camera: Camera) -> () {}
-
-    pub fn starRendererUpdated(&mut self, stars_loaded: usize, range: f32) -> () {
-        self.star_renderer_status = StarRendererStatus {
-            stars_loaded,
-            range,
-        };
-    }
-
     pub fn build_ui(&mut self, appcore: &mut AppCore) -> impl FnMut(&mut Ui) {
         |ui| {
             let main_menu = ui.main_menu_bar(|| {

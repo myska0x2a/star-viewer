@@ -87,7 +87,7 @@ impl<'a> StarRenderer<'a> {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        let range = 15.0;
+        let range = 2.0;
 
         let (star_buffer, num_stars) = load_star_buffer(device, window, &star_handler, range)?;
 
@@ -120,14 +120,7 @@ impl<'a> StarRenderer<'a> {
         }
 
         let window_size = window.size();
-
-        let fov = Rad(camera.fov);
-        let projection_matrix = PerspectiveFov {
-            fovy: fov,
-            aspect: window_size.0 as f32 / window_size.1 as f32,
-            near: 0.01,
-            far: 1.1,
-        };
+        let projection_matrix = camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
 
         let uniform_data = UniformData {
             projection_matrix: Matrix4::from(projection_matrix),

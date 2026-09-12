@@ -6,6 +6,7 @@ use crate::stars::*;
 use cgmath::Basis3;
 use cgmath::Rad;
 use cgmath::Rotation;
+use cgmath::PerspectiveFov;
 use cgmath::{Deg, Matrix3, Rotation3, Vector3};
 use log::{info, warn};
 use sdl3::Sdl;
@@ -81,6 +82,19 @@ impl Camera {
             translation_unit.x, translation_unit.y, translation_unit.z
         );
     }
+
+
+    pub fn get_projection_matrix(&self, w: f32, h: f32) -> PerspectiveFov<f32> {
+        let projection_matrix = PerspectiveFov {
+            fovy: Rad(self.fov),
+            aspect: w / h,
+            near: 0.01,
+            far: 1.1,
+        };
+
+        return projection_matrix;
+    }
+
 }
 
 impl Default for Camera {

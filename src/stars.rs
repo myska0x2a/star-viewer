@@ -3,6 +3,7 @@ use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
 use std::io;
+use crate::core::Camera;
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -58,6 +59,10 @@ impl Star {
     /// returns the distance in light-years.
     pub fn dist_ly(&self) -> f64 {
         return self.dist.clone() * PARSEC_LY;
+    }
+
+    pub fn screencord(&self, camera: &Camera) -> (f32, f32) {
+        todo!();
     }
 }
 
@@ -117,6 +122,12 @@ impl StarHandler {
         );
 
         return nearby;
+    }
+
+    pub fn get_at_screencoord(&self, camera: &Camera, range: f64, detection_radius: f32) -> Vec<&Star>{
+        let nearby = self.get_nearby(range);
+
+        return Vec::new();
     }
 
     pub fn get_stars(&self) -> &Vec<Star> {
