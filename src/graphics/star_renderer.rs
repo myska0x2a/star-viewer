@@ -87,7 +87,7 @@ impl<'a> StarRenderer<'a> {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        let range = 2.0;
+        let range = 1.0;
 
         let (star_buffer, num_stars) = load_star_buffer(device, window, &star_handler, range)?;
 
@@ -110,6 +110,11 @@ impl<'a> StarRenderer<'a> {
         camera: &Camera,
         resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
+
+
+        // check if the camera has moved far enough. if so, reload the star buffer.
+
+
         #[allow(unused)]
         #[repr(align(16))]
         #[derive(Copy, Clone)]
@@ -120,7 +125,8 @@ impl<'a> StarRenderer<'a> {
         }
 
         let window_size = window.size();
-        let projection_matrix = camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
+        let projection_matrix =
+            camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
 
         let uniform_data = UniformData {
             projection_matrix: Matrix4::from(projection_matrix),
@@ -169,10 +175,11 @@ impl<'a> StarRenderer<'a> {
         &mut self,
         device: &Device,
         window: &Window,
+        star_handler: &StarHandler,
         range: f32,
     ) -> Result<(), Box<dyn std::error::Error>> {
         (self.star_buffer, self.num_stars) =
-            load_star_buffer(&device, &window, &self.star_handler, range)?;
+            load_star_buffer(&device, &window, star_handler, range)?;
         Ok(())
     }
 }

@@ -3,6 +3,7 @@ use crate::{
     core::{AppCore, Camera},
     stars::{PARSEC_LY, *},
 };
+use cgmath::Vector4;
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
@@ -17,6 +18,8 @@ struct StarRendererStatus {
 pub struct AppUi {
     star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
+    positions_window_opened: bool,
+    nearby_stars: Vec<(String, Vector4<f32>)>,
     free_move: bool,
 }
 
@@ -26,6 +29,8 @@ impl AppUi {
         AppUi {
             star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
+            positions_window_opened: true,
+            nearby_stars: Vec::default(),
             free_move: true,
         }
     }
@@ -59,9 +64,9 @@ impl AppUi {
                 ui.separator();
                 ui.text(format!(
                     "camera orientation : ({:.2}°x, {:.2}°y, {:.2}°z)",
-                    appcore.camera.orientation.x * (180.0 / PI),
-                    appcore.camera.orientation.y * (180.0 / PI),
-                    appcore.camera.orientation.z * (180.0 / PI)
+                    appcore.camera.orientation.x as f32 * (180.0 / PI),
+                    appcore.camera.orientation.y as f32 * (180.0 / PI),
+                    appcore.camera.orientation.z as f32 * (180.0 / PI)
                 ));
                 ui.separator();
                 ui.text(format!(
@@ -70,6 +75,35 @@ impl AppUi {
                 ));
                 ui.separator();
                 ui.text(format!("camera zoom: {:.2}", appcore.camera.fov));
+                ui.separator();
+
+                let mut nearby_window = false;
+
+                ui.checkbox("detect star positions", &mut self.positions_window_opened);
+                if self.positions_window_opened {
+                    ui.window("nearby window")
+                        .size([200.0, 400.0], imgui::Condition::FirstUseEver)
+                        .build(|| {
+                            ui.text("window! meow");
+                            if (ui.button("get nearby")) {
+                                let window_size = ui.window_size();
+                                self.nearby_stars = appcore.star_handler.get_nearby_screencoord(
+                                    &appcore.camera,
+                                    2.0,
+                                    10.0,
+                                    window_size[0],
+                                    window_size[1],
+                                );
+                            }
+                            for star in &self.nearby_stars {
+                                ui.text(format!(
+                                    "{} - {} x {} y {} z {} w",
+                                    star.0, star.1.x, star.1.y, star.1.z, star.1.w
+                                ));
+                            }
+
+                        });
+                }
 
                 let window = ui.window("miau");
             });

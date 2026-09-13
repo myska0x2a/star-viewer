@@ -75,6 +75,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         renderer.star_renderer.reload(
                             &renderer.device,
                             &renderer.window,
+                            &appcore.star_handler,
                             renderer.star_renderer.range,
                         )?;
                     }

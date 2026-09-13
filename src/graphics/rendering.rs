@@ -21,7 +21,6 @@ pub struct AppRenderer<'a> {
     pub imgui: ImGuiSdl3,
     pub star_renderer: StarRenderer<'a>,
     pub cube_renderer: CubeRenderer,
-    // pub camera: Camera,
     pub mousefocus: bool,
 }
 
@@ -61,7 +60,6 @@ impl<'a> AppRenderer<'a> {
 
         let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
         let mut cube_renderer = CubeRenderer::load(&device, &window)?;
-        // star_renderer.reload(&device, &window, 10.0)?;
 
         return Ok(AppRenderer {
             window,
@@ -69,7 +67,6 @@ impl<'a> AppRenderer<'a> {
             imgui,
             star_renderer,
             cube_renderer,
-            // camera: Camera::default(),
             mousefocus: true,
         });
     }
@@ -80,8 +77,6 @@ impl<'a> AppRenderer<'a> {
         resources: &ResourceManager,
         appcore: &mut AppCore,
         appui: &mut AppUi,
-        // camera: &Camera,
-        // ui_callback: impl FnMut(&mut Ui),
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut event = sdl.event_pump()?;
         let event_pump = &mut event;

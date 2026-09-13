@@ -1,9 +1,10 @@
 //! Loading and handling of stars.
+use crate::core::Camera;
+use cgmath::{Basis3, Matrix4, Rad, Rotation, Rotation3, Transform, Vector3, Vector4};
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
 use std::io;
-use crate::core::Camera;
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -70,6 +71,7 @@ impl Star {
 pub struct StarHandler {
     stars: Vec<Star>,
     tree: KdTree<f64, u32, 3, 32, u32>,
+    range: f32,
 }
 
 impl StarHandler {
@@ -78,6 +80,7 @@ impl StarHandler {
         return StarHandler {
             stars: Vec::new(),
             tree: KdTree::new(),
+            range: 3.0,
         };
     }
 
@@ -124,10 +127,41 @@ impl StarHandler {
         return nearby;
     }
 
-    pub fn get_at_screencoord(&self, camera: &Camera, range: f64, detection_radius: f32) -> Vec<&Star>{
+    pub fn get_nearby_screencoord(
+        &self,
+        camera: &Camera,
+        range: f64,
+        detection_radius: f32,
+        w: f32,
+        h: f32,
+    ) -> Vec<(String, Vector4<f32>)> {
         let nearby = self.get_nearby(range);
 
-        return Vec::new();
+        let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(w, h));
+
+
+        let rx = Basis3::from_angle_x(Rad(camera.orientation.x));
+        let ry = Basis3::from_angle_y(Rad(camera.orientation.x));
+        let rz = Basis3::from_angle_z(Rad(camera.orientation.x));
+
+        let rotation_matrix = rz * ry * rx;
+
+        let mut positions: Vec<(String, Vector4<f32>)> = Vec::new();
+
+        for star in nearby {
+            let mut pos = Vector3::from((star.x as f32, star.y as f32, star.z as f32)) - camera.pos;
+            pos = rotation_matrix.rotate_vector(pos);
+
+            let mut starposndc = projection_matrix * Vector4::from((pos.x, pos.y, pos.z, 1.0));
+            // starposndc.x *= w;
+            // starposndc.y *= h;
+
+            println!("Star: {}, Screen Pos: {:?}", star.name(), starposndc);
+
+            positions.push((star.name(), starposndc));
+        }
+
+        return positions;
     }
 
     pub fn get_stars(&self) -> &Vec<Star> {
