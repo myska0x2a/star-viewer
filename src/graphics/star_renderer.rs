@@ -10,7 +10,6 @@ pub struct StarRenderer<'a> {
     pipeline: GraphicsPipeline,
     star_buffer: Buffer,
     depth_stencil: Texture<'a>,
-    star_handler: StarHandler,
     pub num_stars: usize,
     pub range: f32,
 }
@@ -19,7 +18,7 @@ impl<'a> StarRenderer<'a> {
     pub fn load(
         device: &Device,
         window: &Window,
-        star_handler: StarHandler,
+        star_handler: &StarHandler,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let fs_source = include_bytes!("../../shaders/stars/stars.frag.spv");
         let vs_source = include_bytes!("../../shaders/stars/stars.vert.spv");
@@ -95,7 +94,6 @@ impl<'a> StarRenderer<'a> {
             pipeline: pipeline,
             star_buffer: star_buffer,
             depth_stencil,
-            star_handler,
             num_stars: num_stars,
             range,
         });

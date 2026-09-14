@@ -58,7 +58,7 @@ impl<'a> AppRenderer<'a> {
         let mouse = sdl.mouse();
         mouse.set_relative_mouse_mode(&window, true);
 
-        let mut star_renderer = StarRenderer::load(&device, &window, star_handler.clone())?;
+        let mut star_renderer = StarRenderer::load(&device, &window, star_handler)?;
         let mut cube_renderer = CubeRenderer::load(&device, &window)?;
 
         return Ok(AppRenderer {

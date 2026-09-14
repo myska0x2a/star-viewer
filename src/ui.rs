@@ -89,7 +89,7 @@ impl AppUi {
                                 let window_size = ui.window_size();
                                 self.nearby_stars = appcore.star_handler.get_nearby_screencoord(
                                     &appcore.camera,
-                                    2.0,
+                                    appcore.camera.range,
                                     10.0,
                                     window_size[0],
                                     window_size[1],

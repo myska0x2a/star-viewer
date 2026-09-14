@@ -19,7 +19,7 @@ pub struct Camera {
     pub orientation: Vector3<f32>,
     pub sensitivity: f32,
     pub fov: f32,
-    pub range: f32,
+    pub range: f64,
 }
 
 impl Camera {

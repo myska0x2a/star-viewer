@@ -140,17 +140,23 @@ impl StarHandler {
         let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(w, h));
 
 
-        let rx = Basis3::from_angle_x(Rad(camera.orientation.x));
-        let ry = Basis3::from_angle_y(Rad(camera.orientation.x));
-        let rz = Basis3::from_angle_z(Rad(camera.orientation.x));
+        let rotx = -camera.orientation.y;
+        let roty = -camera.orientation.z;
+        let rotz = -camera.orientation.x;
 
-        let rotation_matrix = rz * ry * rx;
+        let rotmatx = Basis3::<f32>::from_angle_x(Rad(rotx));
+        let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
+        let rotmatz = Basis3::<f32>::from_angle_z(Rad(rotz));
 
         let mut positions: Vec<(String, Vector4<f32>)> = Vec::new();
 
         for star in nearby {
             let mut pos = Vector3::from((star.x as f32, star.y as f32, star.z as f32)) - camera.pos;
-            pos = rotation_matrix.rotate_vector(pos);
+            // pos = rotation_matrix.rotate_vector(pos);
+
+            pos = rotmatx.rotate_vector(pos);
+            pos = rotmaty.rotate_vector(pos);
+            pos = rotmatz.rotate_vector(pos);
 
             let mut starposndc = projection_matrix * Vector4::from((pos.x, pos.y, pos.z, 1.0));
             // starposndc.x *= w;
