@@ -18,7 +18,7 @@ impl<'a> StarRenderer<'a> {
     pub fn load(
         device: &Device,
         window: &Window,
-        star_handler: &StarHandler,
+        appcore: &AppCore,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let fs_source = include_bytes!("../../shaders/stars/stars.frag.spv");
         let vs_source = include_bytes!("../../shaders/stars/stars.vert.spv");
@@ -88,7 +88,7 @@ impl<'a> StarRenderer<'a> {
 
         let range = 1.0;
 
-        let (star_buffer, num_stars) = load_star_buffer(device, window, &star_handler, range)?;
+        let (star_buffer, num_stars) = load_star_buffer(device, window, &appcore.star_handler, range, appcore.camera.pos)?;
 
         return Ok(Self {
             pipeline: pipeline,
@@ -173,7 +173,7 @@ impl<'a> StarRenderer<'a> {
         appcore: &AppCore,
     ) -> Result<(), Box<dyn std::error::Error>> {
         (self.star_buffer, self.num_stars) =
-            load_star_buffer(&device, &window, &appcore.star_handler, appcore.camera.range)?;
+            load_star_buffer(&device, &window, &appcore.star_handler, appcore.camera.range, appcore.camera.pos)?;
         Ok(())
     }
 }
@@ -183,8 +183,9 @@ fn load_star_buffer(
     window: &Window,
     star_handler: &StarHandler,
     range: f32,
+    pos: Vector3<f32>,
 ) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(range as f64);
+    let stars = star_handler.get_nearby(range as f64, pos);
     let num_stars = stars.len() + 32;
 
     let mut star_data: Vec<StarVertexData> = Vec::new();

@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     appcore.load()?;
 
-    let mut renderer = AppRenderer::init(&sdl, appcore.get_star_handler())?;
+    let mut renderer = AppRenderer::init(&sdl, &appcore)?;
     let resources = ResourceManager::load(&renderer.device, ".")?;
 
     let mut mousefocus: bool = true;

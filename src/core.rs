@@ -19,6 +19,7 @@ pub struct Camera {
     pub pos: Vector3<f32>,
     pub orientation: Vector3<f32>,
     pub sensitivity: f32,
+    pub move_speed: f32,
     pub fov: f32,
     pub range: f32,
     reload_distance: f32,
@@ -46,7 +47,7 @@ impl Camera {
         let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
         let rotmatz = Basis3::<f32>::from_angle_z(Rad(rotz));
 
-        let mut translation_unit = Vector3 { x, y, z };
+        let mut translation_unit = Vector3 { x: x * self.move_speed, y: y * self.move_speed, z: z * self.move_speed };
 
         translation_unit = rotmatx.rotate_vector(translation_unit);
         translation_unit = rotmaty.rotate_vector(translation_unit);
@@ -86,9 +87,10 @@ impl Default for Camera {
             pos: Vector3::new(0.0, 0.0, 0.0),
             orientation: Vector3::new(0.0, 0.0, 0.0),
             sensitivity: 1.0,
+            move_speed: 0.15,
             fov: 3.1,
             range: 2.0,
-            reload_distance: 10.0,
+            reload_distance: 3.0,
             last_reload_pos: Vector3::new(0.0, 0.0, 0.0),
         };
     }

@@ -25,7 +25,7 @@ pub struct AppRenderer<'a> {
 }
 
 impl<'a> AppRenderer<'a> {
-    pub fn init(sdl: &Sdl, star_handler: &StarHandler) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn init(sdl: &Sdl, appcore: &AppCore) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Init renderer");
 
         let video_subsystem = sdl.video()?;
@@ -58,7 +58,7 @@ impl<'a> AppRenderer<'a> {
         let mouse = sdl.mouse();
         mouse.set_relative_mouse_mode(&window, true);
 
-        let mut star_renderer = StarRenderer::load(&device, &window, star_handler)?;
+        let mut star_renderer = StarRenderer::load(&device, &window, appcore)?;
         let mut cube_renderer = CubeRenderer::load(&device, &window)?;
 
         return Ok(AppRenderer {

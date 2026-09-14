@@ -107,12 +107,12 @@ impl StarHandler {
 
     // return a list of references to all stars within a specified radius.
     // todo: add reference point (radius centre)
-    pub fn get_nearby(&self, radius: f64) -> Vec<&Star> {
+    pub fn get_nearby(&self, radius: f64, pos: Vector3<f32>) -> Vec<&Star> {
         debug!("StarHandler retreiving nearby stars");
         let mut nearby = Vec::new();
         let within = self
             .tree
-            .within::<SquaredEuclidean>(&[0f64, 0f64, 0f64], radius.powf(2.0));
+            .within::<SquaredEuclidean>(&[pos.x as f64, pos.y as f64, pos.z as f64], radius.powf(2.0));
 
         for neighbor in within {
             nearby.push(self.stars.get(neighbor.item as usize).unwrap());
@@ -135,7 +135,7 @@ impl StarHandler {
         w: f32,
         h: f32,
     ) -> Vec<(String, Vector4<f32>)> {
-        let nearby = self.get_nearby(range as f64);
+        let nearby = self.get_nearby(range as f64, camera.pos);
 
         let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(w, h));
 

@@ -119,24 +119,23 @@ impl AppUi {
                 ui.show_demo_window(&mut true);
             }
 
-            let speed_boost = 1.0;
             let base_speed = 0.073;
 
             if ui.is_key_down(imgui::Key::W) {
                 appcore
                     .camera
-                    .translate(0.0, 0.0, -base_speed * speed_boost);
+                    .translate(0.0, 0.0, -1.0);
             }
             if ui.is_key_down(imgui::Key::S) {
-                appcore.camera.translate(0.0, 0.0, base_speed * speed_boost);
+                appcore.camera.translate(0.0, 0.0, 1.0);
             }
             if ui.is_key_down(imgui::Key::A) {
                 appcore
                     .camera
-                    .translate(-base_speed * speed_boost, 0.0, 0.0);
+                    .translate(-1.0, 0.0, 0.0);
             }
             if ui.is_key_down(imgui::Key::D) {
-                appcore.camera.translate(base_speed * speed_boost, 0.0, 0.0);
+                appcore.camera.translate(1.0, 0.0, 0.0);
             }
         }
     }
