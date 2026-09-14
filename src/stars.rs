@@ -130,12 +130,12 @@ impl StarHandler {
     pub fn get_nearby_screencoord(
         &self,
         camera: &Camera,
-        range: f64,
+        range: f32,
         detection_radius: f32,
         w: f32,
         h: f32,
     ) -> Vec<(String, Vector4<f32>)> {
-        let nearby = self.get_nearby(range);
+        let nearby = self.get_nearby(range as f64);
 
         let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(w, h));
 

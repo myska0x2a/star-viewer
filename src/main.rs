@@ -5,6 +5,7 @@ use sdl3::event::*;
 use sdl3::keyboard::Keycode;
 use starviewer::core::AppCore;
 use starviewer::graphics::rendering::*;
+use starviewer::graphics::star_renderer;
 use starviewer::resources::ResourceManager;
 use starviewer::ui::*;
 
@@ -34,6 +35,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     'main: loop {
         for event in sdl.event_pump()?.poll_iter() {
             renderer.imgui.handle_event(&event);
+
+            // check if the camera has moved far enough. if so, reload the star buffer.
+            if appcore.camera.check_reload() {
+                        renderer.star_renderer.reload(
+                            &renderer.device,
+                            &renderer.window,
+                            &appcore,
+                            // renderer.star_renderer.range,
+                        )?;
+
+                        println!("reload");
+            }
 
             match event {
                 Event::Quit { .. } => {
@@ -70,13 +83,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // range changing
                     if x != 0.0f32 {
-                        renderer.star_renderer.range =
-                            (renderer.star_renderer.range + x).clamp(0.2, 9999999.0);
+                        appcore.camera.range =
+                            (appcore.camera.range + x).clamp(0.2, 9999999.0);
+
                         renderer.star_renderer.reload(
                             &renderer.device,
                             &renderer.window,
-                            &appcore.star_handler,
-                            renderer.star_renderer.range,
+                            &appcore,
                         )?;
                     }
                 }

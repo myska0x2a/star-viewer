@@ -110,9 +110,6 @@ impl<'a> StarRenderer<'a> {
     ) -> Result<(), Box<dyn std::error::Error>> {
 
 
-        // check if the camera has moved far enough. if so, reload the star buffer.
-
-
         #[allow(unused)]
         #[repr(align(16))]
         #[derive(Copy, Clone)]
@@ -173,11 +170,10 @@ impl<'a> StarRenderer<'a> {
         &mut self,
         device: &Device,
         window: &Window,
-        star_handler: &StarHandler,
-        range: f32,
+        appcore: &AppCore,
     ) -> Result<(), Box<dyn std::error::Error>> {
         (self.star_buffer, self.num_stars) =
-            load_star_buffer(&device, &window, star_handler, range)?;
+            load_star_buffer(&device, &window, &appcore.star_handler, appcore.camera.range)?;
         Ok(())
     }
 }

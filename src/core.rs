@@ -4,6 +4,7 @@ use std::f32::consts::PI;
 use crate::graphics::rendering::AppRenderer;
 use crate::stars::*;
 use cgmath::Basis3;
+use cgmath::InnerSpace;
 use cgmath::PerspectiveFov;
 use cgmath::Rad;
 use cgmath::Rotation;
@@ -19,7 +20,9 @@ pub struct Camera {
     pub orientation: Vector3<f32>,
     pub sensitivity: f32,
     pub fov: f32,
-    pub range: f64,
+    pub range: f32,
+    reload_distance: f32,
+    last_reload_pos: Vector3<f32>,
 }
 
 impl Camera {
@@ -52,6 +55,19 @@ impl Camera {
         self.pos += translation_unit;
     }
 
+    pub fn check_reload(&mut self) -> bool {
+        let mut reload = false;
+
+        let delta_pos = self.pos - self.last_reload_pos; 
+
+        if delta_pos.magnitude() > self.reload_distance {
+            self.last_reload_pos = self.pos;
+            reload = true;
+        }
+
+        return reload;
+    }
+
     pub fn get_projection_matrix(&self, w: f32, h: f32) -> PerspectiveFov<f32> {
         let projection_matrix = PerspectiveFov {
             fovy: Rad(self.fov),
@@ -72,6 +88,8 @@ impl Default for Camera {
             sensitivity: 1.0,
             fov: 3.1,
             range: 2.0,
+            reload_distance: 10.0,
+            last_reload_pos: Vector3::new(0.0, 0.0, 0.0),
         };
     }
 }
