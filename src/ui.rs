@@ -82,9 +82,10 @@ impl AppUi {
                 ui.checkbox("detect star positions", &mut self.positions_window_opened);
                 if self.positions_window_opened {
                     ui.window("nearby window")
-                        .size([200.0, 400.0], imgui::Condition::FirstUseEver)
+                        .size([400.0, 400.0], imgui::Condition::FirstUseEver)
                         .build(|| {
                             ui.text("window! meow");
+                            ui.text(format!("range: {}", appcore.camera.range));
                             if (ui.button("get nearby")) {
                                 let window_size = ui.window_size();
                                 self.nearby_stars = appcore.star_handler.get_nearby_screencoord(
