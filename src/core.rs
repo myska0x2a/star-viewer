@@ -15,7 +15,6 @@ use sdl3::event::*;
 
 #[derive(Copy, Clone)]
 pub struct Camera {
-    // pub pos: [f32; 3],
     pub pos: Vector3<f32>,
     pub orientation: Vector3<f32>,
     pub sensitivity: f32,
