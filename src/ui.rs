@@ -139,7 +139,8 @@ impl AppUi {
             }
 
             // detecting clicks on stars
-            if ui.is_mouse_down(imgui::MouseButton::Left) {
+            if ui.is_mouse_clicked(imgui::MouseButton::Left) {
+                self.selected_star = None;
                 let mouse_pos = Vector2::from(ui.io().mouse_pos);
                 for star in &self.nearby_stars {
                     if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
