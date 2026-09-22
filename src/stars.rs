@@ -12,14 +12,14 @@ pub const PARSEC_LY: f64 = 3.262;
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Star {
-    id: u32,
-    hip: Option<i32>,
-    hd: Option<i32>,
-    hr: Option<i32>,
-    gl: Option<String>,
-    bf: Option<String>,
-    proper: Option<String>,
-    dist: f64,
+    pub id: u32,
+    pub hip: Option<i32>,
+    pub hd: Option<i32>,
+    pub hr: Option<i32>,
+    pub gl: Option<String>,
+    pub bf: Option<String>,
+    pub proper: Option<String>,
+    pub dist: f64,
     pub absmag: f32,
     pub ci: Option<f32>,
     pub x: f64,

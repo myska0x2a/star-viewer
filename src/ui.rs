@@ -41,6 +41,8 @@ impl AppUi {
 
     pub fn build_ui(&mut self, appcore: &mut AppCore) -> impl FnMut(&mut Ui) {
         |ui| {
+            let global_window_size = [ 1920.0, 1200.0 ];
+
             // top menu bar
             let main_menu = ui.main_menu_bar(|| {
                 ui.menu("Settings", || {
@@ -62,6 +64,7 @@ impl AppUi {
                     ui.text("no star selected");
                 }
                 ui.separator();
+
 
                 // view controls window
                 if self.view_controls_window_opened {
@@ -89,6 +92,41 @@ impl AppUi {
                 }
             });
 
+            // star information window
+            if let Some(star) = &self.selected_star {
+                ui.window(format!("{}", star.name()))
+                    .size([400.0, 1000.0], imgui::Condition::FirstUseEver)
+                    .movable(true)
+                    .position([global_window_size[0]-440.0, 40.0], imgui::Condition::FirstUseEver)
+                    .build(|| {
+                        ui.text("Identifiers:");
+                        ui.separator();
+                        ui.text(format!("Common name: {}", star.proper.clone().unwrap_or("None".to_owned())));
+                        ui.text(format!("Bayer/flamsteed designation: {}", star.bf.clone().unwrap_or("None".to_owned())));
+                        ui.text(format!("Gleise catalogue: {}", star.gl.clone().unwrap_or("None".to_owned())));
+                        let hd = star.hd.clone();
+                        if let Some(hd) = hd {
+                            ui.text(format!("Henry Draper catalogue: HD {}", hd));
+                        } else {
+                            ui.text(format!("Henry Draper catalogue: None"));
+                        }
+                        let hr = star.hr.clone();
+                        if let Some(hr) = hr {
+                            ui.text(format!("Harvard Bright Star Catalogue: HD {}", hr));
+                        } else {
+                            ui.text(format!("Harvard Bright Star Catalogue: None"));
+                        }
+
+                        ui.separator();
+
+
+
+
+
+                    });
+                
+            }
+
             // imgui demo window
             if self.demo_window_opened {
                 ui.show_demo_window(&mut true);
@@ -98,9 +136,11 @@ impl AppUi {
             for star in &self.nearby_stars {
                 let projected = star.get_screencoord(&appcore.camera, 1920.0, 1200.0);
                 if let Some(scrpos) = projected {
+                    let star_radius = get_star_radius(&star, appcore.camera.pos) * 3.0; 
+
                     if (star.dist(appcore.camera.pos) < 3.0) {
                         let draw_text = ui.get_background_draw_list().add_text(
-                            [scrpos.x + 10.0, scrpos.y + 10.0],
+                            [scrpos.x + star_radius, scrpos.y + star_radius],
                             imgui::ImColor32::from_rgb(255, 255, 255),
                             format!("{}", star.name()),
                         );
@@ -111,11 +151,12 @@ impl AppUi {
             // highlighting selected star
             if let Some(star) = &self.selected_star {
                 if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
+                    let star_radius = get_star_radius(&star, appcore.camera.pos); 
                     let draw = ui
                         .get_background_draw_list()
                         .add_circle(
                             [scrpos.x as f32, scrpos.y as f32],
-                            5.0 * get_star_radius(&star, appcore.camera.pos),
+                            5.0 * star_radius,
                             [1.0, 0.0, 0.0],
                         )
                         .thickness(1.0)
@@ -149,7 +190,8 @@ impl AppUi {
                             + mouse_star_delta.y * mouse_star_delta.y)
                             .sqrt();
 
-                        if mouse_distance < 10.0 {
+                        // todo: depth/distance priority
+                        if mouse_distance < (5.0 * get_star_radius(star, appcore.camera.pos)) {
                             self.selected_star = Some(star.clone());
                         }
                     }

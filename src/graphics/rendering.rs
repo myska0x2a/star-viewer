@@ -45,14 +45,14 @@ impl<'a> AppRenderer<'a> {
             ctx.set_log_filename(None);
 
             let font = imgui::FontSource::TtfData {
-                data: include_bytes!("../../assets/ST-Spartak.otf"),
+                data: include_bytes!("../../assets/Neco-Medium.otf"),
                 size_pixels: 20.0,
                 config: None,
             };
 
             ctx.fonts()
-                .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
-            // .add_font(&[font]);
+                // .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
+                .add_font(&[font]);
         });
 
         let mouse = sdl.mouse();
