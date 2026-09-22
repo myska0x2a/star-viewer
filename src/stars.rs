@@ -62,12 +62,13 @@ impl Star {
         return self.dist.clone() * PARSEC_LY;
     }
 
+    // retreives the screen coordinate of the star through projection
     pub fn get_screencoord(
         &self,
         camera: &Camera,
         w: f32,
         h: f32,
-    ) -> Vector3<f32> {
+    ) -> Option<Vector3<f32>> {
         let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(1920.0, 1200.0));
 
         let rotmatx = Basis3::<f32>::from_angle_x(Rad(camera.orientation.y));
@@ -76,9 +77,9 @@ impl Star {
 
         // camera space transform
         let mut starpos = Vector3::from((self.x as f32, self.y as f32, self.z as f32)) - camera.pos;
-        starpos = rotmatx.rotate_vector(starpos);
-        starpos = rotmaty.rotate_vector(starpos);
         starpos = rotmatz.rotate_vector(starpos);
+        starpos = rotmaty.rotate_vector(starpos);
+        starpos = rotmatx.rotate_vector(starpos);
 
         // projection
         let projection_matrix = camera.get_projection_matrix(1920.0, 1200.0);
@@ -86,13 +87,41 @@ impl Star {
 
         // conversion from clip space to screen space
         let screen_position = clip_to_viewport(starposclip, 1920.0, 1200.0);
-        
-        // finding the distance to the star (for depth coordinate)
-        let dist = (self.x*self.x + self.y*self.y + self.z*self.z).sqrt() + 0.1;
 
         return screen_position;
     }
 }
+
+// useful: https://www.songho.ca/opengl/gl_viewport.html
+fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Option<Vector3<f32>> {
+    // conversion to actual ndc coordinates
+    // https://stackoverflow.com/questions/22886853/how-to-convert-projected-points-to-screen-coordinatesviewport-matrix 
+    
+    if ((clip.x > -clip.w) && (clip.x < clip.w))
+    || ((clip.y > -clip.w) && (clip.y < clip.w)) 
+    || ((clip.z > -clip.w) && (clip.z < clip.w))
+    {
+        let ndc = clip.xyz() / clip.w;
+
+
+        // far/near clip values
+        let n = 0.01;
+        let f = 1.1;
+
+
+
+        // https://stackoverflow.com/questions/57938025/how-does-a-camera-convert-from-clip-space-into-screen-space
+        let screenx = (ndc.x + 1.0) * (w/2.0);
+        let screeny = 1200.0 - ((ndc.y + 1.0) * (h/2.0));
+        // let screenz = (ndc.z + 1.0) * (f - n) / 2.0 + n;
+        let screenz = (((f - n)/2.0)*(ndc.z)) + ((f+n)/2.0);
+
+        return Some(Vector3::from((screenx, screeny, screenz)));
+    }
+
+    return None;
+}
+
 
 #[derive(Clone)]
 pub struct StarHandler {
@@ -164,20 +193,3 @@ impl StarHandler {
 
 }
 
-// useful: https://www.songho.ca/opengl/gl_viewport.html
-fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Vector3<f32> {
-    // conversion to actual ndc coordinates
-    // https://stackoverflow.com/questions/22886853/how-to-convert-projected-points-to-screen-coordinatesviewport-matrix 
-    let ndc = clip.xyz() / clip.w;
-
-    // far/near clip values
-    let n = 0.01;
-    let f = 1.1;
-
-    // https://stackoverflow.com/questions/57938025/how-does-a-camera-convert-from-clip-space-into-screen-space
-    let screenx = (ndc.x + 1.0) * (w/2.0);
-    let screeny = 1200.0 - ((ndc.y + 1.0) * (h/2.0));
-    let screenz = (ndc.z + 1.0) * (f - n) / 2.0 + n;
-
-    return Vector3::from((screenx, screeny, screenz));
-}

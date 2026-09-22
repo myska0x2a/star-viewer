@@ -30,10 +30,10 @@ impl Camera {
         if ((self.orientation.y > -PI) && (self.orientation.y < PI))
             || (self.orientation.y * y < 0.0)
         {
-            self.orientation.y += y * (self.sensitivity / self.fov);
+            self.orientation.y += y * self.sensitivity;
         }
 
-        self.orientation.z += z * (self.sensitivity / self.fov);
+        self.orientation.z += z * self.sensitivity;
     }
 
     pub fn translate(&mut self, x: f32, y: f32, z: f32) {

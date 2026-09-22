@@ -80,7 +80,7 @@ mat3x3 rot3d(float rx, float ry, float rz) {
 		0, 0, 1
 	);
 
-	return x * y * z;
+	return z * y * x;
 }
 
 const float ZOOM = 1.f;
