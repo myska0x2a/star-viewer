@@ -21,6 +21,7 @@ pub struct AppUi {
     positions_window_opened: bool,
     view_controls_window_opened: bool,
     nearby_stars: Vec<Star>,
+    selected_star: Option<Star>,
     star_scale: f32,
 }
 
@@ -33,6 +34,7 @@ impl AppUi {
             positions_window_opened: true,
             view_controls_window_opened: true,
             nearby_stars: Vec::default(),
+            selected_star: None,
             star_scale: 1.0,
         }
     }
@@ -56,6 +58,13 @@ impl AppUi {
                     appcore.camera.pos.x, appcore.camera.pos.y, appcore.camera.pos.z,
                 ));
                 ui.separator();
+                if let Some(star) = &self.selected_star {
+                    ui.text(format!("selected star: {}", star.name()));
+                } else {
+                    ui.text("no star selected");
+                }
+                ui.separator();
+
 
                 if self.view_controls_window_opened {
                     ui.window("view controls")
@@ -87,14 +96,10 @@ impl AppUi {
                 }
             });
 
+            // drawing star labels
             for star in &self.nearby_stars {
                 let projected = star.get_screencoord(&appcore.camera, 1920.0, 1200.0);
                 if let Some(scrpos) = projected {
-                    // let draw = ui
-                    //     .get_background_draw_list()
-                    //     .add_circle([scrpos.x as f32, scrpos.y as f32], 5.0, [1.0, 0.0, 0.0])
-                    //     .thickness(1.0)
-                    //     .build();
 
                     if (star.dist(appcore.camera.pos) < 3.0) {
                         let draw_text = ui
@@ -102,6 +107,20 @@ impl AppUi {
                             .add_text([scrpos.x+10.0, scrpos.y+10.0], imgui::ImColor32::from_rgb(255, 255, 255), format!("{}", star.name()));
                     }
                 }
+            }
+
+            // highlighting selected star
+            if let Some(star) = &self.selected_star {
+                if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
+                    let dist = star.dist(appcore.camera.pos);
+                    let lightmult = star.absmag / (dist*dist);
+                    let draw = ui
+                        .get_background_draw_list()
+                        .add_circle([scrpos.x as f32, scrpos.y as f32], 5.0*lightmult, [1.0, 0.0, 0.0])
+                        .thickness(1.0)
+                        .build();
+                }
+
             }
 
 
@@ -126,15 +145,15 @@ impl AppUi {
 
 
             if ui.is_mouse_down(imgui::MouseButton::Left) {
-                let intersected_stars: Vec<Star> = Vec::new();
                 let mouse_pos = Vector2::from(ui.io().mouse_pos);
-                ui.text(format!("mouse pos: {:?}", mouse_pos));
                 for star in &self.nearby_stars {
                     if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
                         let mouse_star_delta = scrpos.xy() - mouse_pos;
                         let mouse_distance = (mouse_star_delta.x*mouse_star_delta.x + mouse_star_delta.y*mouse_star_delta.y).sqrt();
-                        ui.text(format!("distance from {}: {}", star.name(), mouse_distance));
 
+                        if mouse_distance < 10.0 {
+                            self.selected_star = Some(star.clone());
+                        }
                     }
                 }
             }

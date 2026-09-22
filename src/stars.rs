@@ -8,7 +8,7 @@ use std::{io, ops::Mul};
 
 pub const PARSEC_LY: f64 = 3.262;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Star {
     id: u32,
     hip: Option<i32>,
