@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut appui = AppUi::new();
 
     appcore.load()?;
+    appui.reload_stars(&appcore);
 
     let mut renderer = AppRenderer::init(&sdl, &appcore)?;
     let resources = ResourceManager::load(&renderer.device, ".")?;
