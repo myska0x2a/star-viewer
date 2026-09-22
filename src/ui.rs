@@ -108,11 +108,7 @@ impl AppUi {
                             ui.text("window! meow");
                             ui.text(format!("range: {}", appcore.camera.range));
                             if (ui.button("get nearby")) {
-                                let window_size = ui.window_size();
-                                self.nearby_stars = appcore.star_handler.get_nearby(
-                                    appcore.camera.range as f64,
-                                    appcore.camera.pos,
-                                ).into_iter().cloned().collect();
+
                             }
 
                             ui.slider("star scale", 0.0, 10.0, &mut self.star_scale);
@@ -170,6 +166,14 @@ impl AppUi {
                 appcore.camera.translate(1.0, 0.0, 0.0);
             }
         }
+    }
+
+    pub fn reload_stars(&mut self, appcore: &AppCore) {
+        self.nearby_stars = appcore.star_handler.get_nearby(
+            appcore.camera.range as f64 / 5.0,
+            appcore.camera.pos,
+        ).into_iter().cloned().collect();
+
     }
 }
 
