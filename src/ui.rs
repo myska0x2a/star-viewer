@@ -63,7 +63,7 @@ impl AppUi {
                         .position([20.0, 40.0], imgui::Condition::FirstUseEver)
                         .build(|| {
                             ui.text(format!(
-                                "camera orientation : ({:.2}°x, {:.2}°y, {:.2}°z)",
+                                "camera orientation : ({:.2}° x, {:.2}° y, {:.2}° z)",
                                 appcore.camera.orientation.x as f32 * (180.0 / PI),
                                 appcore.camera.orientation.y as f32 * (180.0 / PI),
                                 appcore.camera.orientation.z as f32 * (180.0 / PI)
@@ -122,6 +122,16 @@ impl AppUi {
             }
             if ui.is_key_down(imgui::Key::D) {
                 appcore.camera.translate(1.0, 0.0, 0.0);
+            }
+
+
+            if ui.is_mouse_clicked(imgui::MouseButton::Left) {
+                let intersected_stars: Vec<Star> = Vec::new();
+                for star in &self.nearby_stars {
+                    if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
+
+                    }
+                }
             }
         }
     }

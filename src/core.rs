@@ -98,13 +98,8 @@ impl Default for Camera {
     }
 }
 
-pub struct AppSettings {
-    pub free_move: bool,
-}
-
 pub struct AppCore {
     pub star_handler: StarHandler,
-    pub settings: AppSettings,
     pub camera: Camera,
 }
 
@@ -113,7 +108,6 @@ impl AppCore {
         info!("Init app core...");
         Ok(AppCore {
             star_handler: StarHandler::new(),
-            settings: AppSettings { free_move: true },
             camera: Camera::default(),
         })
     }
