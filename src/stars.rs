@@ -62,8 +62,35 @@ impl Star {
         return self.dist.clone() * PARSEC_LY;
     }
 
-    pub fn screencord(&self, camera: &Camera) -> (f32, f32) {
-        todo!();
+    pub fn get_screencoord(
+        &self,
+        camera: &Camera,
+        w: f32,
+        h: f32,
+    ) -> Vector3<f32> {
+        let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(1920.0, 1200.0));
+
+        let rotmatx = Basis3::<f32>::from_angle_x(Rad(camera.orientation.y));
+        let rotmaty = Basis3::<f32>::from_angle_y(Rad(camera.orientation.z));
+        let rotmatz = Basis3::<f32>::from_angle_z(Rad(camera.orientation.x));
+
+        // camera space transform
+        let mut starpos = Vector3::from((self.x as f32, self.y as f32, self.z as f32)) - camera.pos;
+        starpos = rotmatx.rotate_vector(starpos);
+        starpos = rotmaty.rotate_vector(starpos);
+        starpos = rotmatz.rotate_vector(starpos);
+
+        // projection
+        let projection_matrix = camera.get_projection_matrix(1920.0, 1200.0);
+        let starposclip = Matrix4::from(projection_matrix) * Vector4::from((starpos.x, starpos.y, starpos.z, 1.0));
+
+        // conversion from clip space to screen space
+        let screen_position = clip_to_viewport(starposclip, 1920.0, 1200.0);
+        
+        // finding the distance to the star (for depth coordinate)
+        let dist = (self.x*self.x + self.y*self.y + self.z*self.z).sqrt() + 0.1;
+
+        return screen_position;
     }
 }
 
@@ -106,7 +133,6 @@ impl StarHandler {
     }
 
     // return a list of references to all stars within a specified radius.
-    // todo: add reference point (radius centre)
     pub fn get_nearby(&self, radius: f64, pos: Vector3<f32>) -> Vec<&Star> {
         debug!("StarHandler retreiving nearby stars");
         let mut nearby = Vec::new();
@@ -128,46 +154,6 @@ impl StarHandler {
         return nearby;
     }
 
-    pub fn get_nearby_screencoord(
-        &self,
-        camera: &Camera,
-        range: f32,
-        detection_radius: f32,
-        w: f32,
-        h: f32,
-    ) -> Vec<(String, Vector3<f32>)> {
-        let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(1920.0, 1200.0));
-
-        let mut positions: Vec<(String, Vector3<f32>)> = Vec::new();
-        let nearby = self.get_nearby(range as f64, camera.pos);
-
-        let rotmatx = Basis3::<f32>::from_angle_x(Rad(camera.orientation.y));
-        let rotmaty = Basis3::<f32>::from_angle_y(Rad(camera.orientation.z));
-        let rotmatz = Basis3::<f32>::from_angle_z(Rad(camera.orientation.x));
-
-        for star in nearby {
-            // camera space transform
-            let mut starpos = Vector3::from((star.x as f32, star.y as f32, star.z as f32)) - camera.pos;
-            starpos = rotmatx.rotate_vector(starpos);
-            starpos = rotmaty.rotate_vector(starpos);
-            starpos = rotmatz.rotate_vector(starpos);
-
-            // projection
-            let projection_matrix = camera.get_projection_matrix(1920.0, 1200.0);
-            let starposclip = Matrix4::from(projection_matrix) * Vector4::from((starpos.x, starpos.y, starpos.z, 1.0));
-
-            // conversion from clip space to screen space
-            let screen_position = clip_to_viewport(starposclip, 1920.0, 1200.0);
-            
-            // finding the distance to the star (for depth coordinate)
-            let dist = (star.x*star.x + star.y*star.y + star.z*star.z).sqrt() + 0.1;
-
-            positions.push((star.name(), Vector3::from([screen_position.x, screen_position.y, dist as f32/(star.absmag*star.absmag)])));
-        }
-
-        return positions;
-    }
-
     pub fn get_stars(&self) -> &Vec<Star> {
         return &self.stars;
     }
@@ -187,10 +173,6 @@ fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Vector3<f32> {
     // far/near clip values
     let n = 0.01;
     let f = 1.1;
-    
-    // bottom/left corners of viewport
-    let x = 0.0;
-    let y = 0.0;
 
     // https://stackoverflow.com/questions/57938025/how-does-a-camera-convert-from-clip-space-into-screen-space
     let screenx = (ndc.x + 1.0) * (w/2.0);

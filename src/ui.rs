@@ -20,7 +20,7 @@ pub struct AppUi {
     demo_window_opened: bool,
     positions_window_opened: bool,
     camera_controls_window_opened: bool,
-    nearby_stars: Vec<(String, Vector3<f32>)>,
+    nearby_stars: Vec<Star>,
     star_scale: f32,
     free_move: bool,
 }
@@ -109,13 +109,10 @@ impl AppUi {
                             ui.text(format!("range: {}", appcore.camera.range));
                             if (ui.button("get nearby")) {
                                 let window_size = ui.window_size();
-                                self.nearby_stars = appcore.star_handler.get_nearby_screencoord(
-                                    &appcore.camera,
-                                    appcore.camera.range,
-                                    10.0,
-                                    1920.0,
-                                    1200.0,
-                                );
+                                self.nearby_stars = appcore.star_handler.get_nearby(
+                                    appcore.camera.range as f64,
+                                    appcore.camera.pos,
+                                ).into_iter().cloned().collect();
                             }
 
                             ui.slider("star scale", 0.0, 10.0, &mut self.star_scale);
@@ -134,16 +131,22 @@ impl AppUi {
             });
 
             for star in &self.nearby_stars {
+                let scrpos = star.get_screencoord(&appcore.camera, 1920.0, 1200.0);
                 ui.text(format!(
                     "{}: {:.2} x {:.2} y {:.2} z",
-                    star.0, star.1.x, star.1.y, star.1.z
+                    star.name(), scrpos.x, scrpos.y, scrpos.z
                 ));
 
                 let draw = ui
                     .get_background_draw_list()
-                    .add_circle([star.1.x, star.1.y], 5.0, [1.0, 0.0, 0.0])
+                    .add_circle([scrpos.x as f32, scrpos.y as f32], 5.0, [1.0, 0.0, 0.0])
                     .thickness(1.0)
                     .build();
+
+                let draw_text = ui
+                    .get_background_draw_list()
+                    .add_text([scrpos.x, scrpos.y], imgui::ImColor32::from_rgb(255, 255, 255), format!("{}", star.name()));
+
             }
 
 
