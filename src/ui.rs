@@ -118,8 +118,6 @@ impl AppUi {
                                 ui.window_size()[0],
                                 ui.window_size()[1]
                             ));
-
-
                         });
                 }
 

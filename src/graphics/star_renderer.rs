@@ -86,7 +86,7 @@ impl<'a> StarRenderer<'a> {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        let range = 1.0;
+        let range = appcore.camera.range;
 
         let (star_buffer, num_stars) = load_star_buffer(
             device,

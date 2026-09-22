@@ -42,7 +42,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     &renderer.device,
                     &renderer.window,
                     &appcore,
-                    // renderer.star_renderer.range,
                 )?;
 
                 appui.reload_stars(&appcore);

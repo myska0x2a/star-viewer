@@ -91,8 +91,8 @@ impl Default for Camera {
             sensitivity: 1.0,
             move_speed: 0.15,
             fov: 0.65 * PI, // supposedly main human fov ish
-            range: 2.0,
-            reload_distance: 3.0,
+            range: 10.0,
+            reload_distance: 0.1,
             last_reload_pos: Vector3::new(0.0, 0.0, 0.0),
         };
     }
