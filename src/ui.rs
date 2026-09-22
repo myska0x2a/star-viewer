@@ -129,20 +129,17 @@ impl AppUi {
             for star in &self.nearby_stars {
                 let projected = star.get_screencoord(&appcore.camera, 1920.0, 1200.0);
                 if let Some(scrpos) = projected {
-                    ui.text(format!(
-                        "{}: {:.2} x {:.2} y {:.2} z",
-                        star.name(), scrpos.x, scrpos.y, scrpos.z
-                    ));
-
                     // let draw = ui
                     //     .get_background_draw_list()
                     //     .add_circle([scrpos.x as f32, scrpos.y as f32], 5.0, [1.0, 0.0, 0.0])
                     //     .thickness(1.0)
                     //     .build();
 
-                    let draw_text = ui
-                        .get_background_draw_list()
-                        .add_text([scrpos.x+10.0, scrpos.y+10.0], imgui::ImColor32::from_rgb(255, 255, 255), format!("{}", star.name()));
+                    if (star.dist(appcore.camera.pos) < 3.0) {
+                        let draw_text = ui
+                            .get_background_draw_list()
+                            .add_text([scrpos.x+10.0, scrpos.y+10.0], imgui::ImColor32::from_rgb(255, 255, 255), format!("{}", star.name()));
+                    }
                 }
             }
 
@@ -170,7 +167,7 @@ impl AppUi {
 
     pub fn reload_stars(&mut self, appcore: &AppCore) {
         self.nearby_stars = appcore.star_handler.get_nearby(
-            appcore.camera.range as f64 / 5.0,
+            appcore.camera.range as f64,
             appcore.camera.pos,
         ).into_iter().cloned().collect();
 

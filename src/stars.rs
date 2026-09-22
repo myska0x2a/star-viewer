@@ -1,6 +1,6 @@
 //! Loading and handling of stars.
 use crate::core::Camera;
-use cgmath::{Basis3, Matrix3, Matrix4, Rad, Rotation, Rotation3, Transform, Vector3, Vector4};
+use cgmath::{Basis3, InnerSpace, Matrix3, Matrix4, Rad, Rotation, Rotation3, Transform, Vector3, Vector4};
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
@@ -53,13 +53,14 @@ impl Star {
     }
 
     /// returns the distance in parsecs.
-    pub fn dist(&self) -> f64 {
-        return self.dist.clone();
+    pub fn dist(&self, pos: Vector3<f32>) -> f32 {
+        let delta = Vector3::from([self.x as f32, self.y as f32, self.z as f32]) - pos;
+        return delta.magnitude();
     }
 
     /// returns the distance in light-years.
-    pub fn dist_ly(&self) -> f64 {
-        return self.dist.clone() * PARSEC_LY;
+    pub fn dist_ly(&self, pos: Vector3<f32>) -> f32 {
+        return self.dist(pos) * PARSEC_LY as f32;
     }
 
     // retreives the screen coordinate of the star through projection
