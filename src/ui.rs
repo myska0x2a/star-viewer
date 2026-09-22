@@ -3,11 +3,11 @@ use crate::{
     core::{AppCore, Camera},
     stars::{PARSEC_LY, *},
 };
-use cgmath::Vector4;
+use cgmath::{Vector4, Vector3};
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
-use std::f32::consts::PI;
+use std::{f32::consts::PI, mem::transmute};
 
 #[derive(Default)]
 struct StarRendererStatus {
@@ -19,7 +19,9 @@ pub struct AppUi {
     star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
     positions_window_opened: bool,
-    nearby_stars: Vec<(String, Vector4<f32>)>,
+    camera_controls_window_opened: bool,
+    nearby_stars: Vec<(String, Vector3<f32>)>,
+    star_scale: f32,
     free_move: bool,
 }
 
@@ -30,7 +32,9 @@ impl AppUi {
             star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
             positions_window_opened: true,
+            camera_controls_window_opened: true,
             nearby_stars: Vec::default(),
+            star_scale: 1.0,
             free_move: true,
         }
     }
@@ -80,9 +84,26 @@ impl AppUi {
                 let mut nearby_window = false;
 
                 ui.checkbox("detect star positions", &mut self.positions_window_opened);
+                ui.checkbox("camera controls", &mut self.camera_controls_window_opened);
+
+                if self.camera_controls_window_opened {
+                    ui.window("camera controls")
+                        .size([400.0, 400.0], imgui::Condition::FirstUseEver)
+                        .position([20.0, 500.0], imgui::Condition::FirstUseEver)
+                        .build(|| {
+                            ui.slider(
+                                "reload distance",
+                                0.0,
+                                50.0,
+                                &mut appcore.camera.reload_distance,
+                            );
+                        });
+                }
+
                 if self.positions_window_opened {
                     ui.window("nearby window")
                         .size([400.0, 400.0], imgui::Condition::FirstUseEver)
+                        .position([20.0, 40.0], imgui::Condition::FirstUseEver)
                         .build(|| {
                             ui.text("window! meow");
                             ui.text(format!("range: {}", appcore.camera.range));
@@ -92,16 +113,19 @@ impl AppUi {
                                     &appcore.camera,
                                     appcore.camera.range,
                                     10.0,
-                                    window_size[0],
-                                    window_size[1],
+                                    1920.0,
+                                    1200.0,
                                 );
                             }
-                            for star in &self.nearby_stars {
-                                ui.text(format!(
-                                    "{} - {} x {} y {} z {} w",
-                                    star.0, star.1.x, star.1.y, star.1.z, star.1.w
-                                ));
-                            }
+
+                            ui.slider("star scale", 0.0, 10.0, &mut self.star_scale);
+
+                            ui.text(format!(
+                                "screen dimensions: {} w {} h",
+                                ui.window_size()[0],
+                                ui.window_size()[1]
+                            ));
+
 
                         });
                 }
@@ -109,11 +133,19 @@ impl AppUi {
                 let window = ui.window("miau");
             });
 
-            // let draw = ui
-            //     .get_background_draw_list()
-            //     .add_circle([700.0, 700.0], 150.0, [1.0, 0.0, 0.0])
-            //     .thickness(4.0)
-            //     .build();
+            for star in &self.nearby_stars {
+                ui.text(format!(
+                    "{}: {:.2} x {:.2} y {:.2} z",
+                    star.0, star.1.x, star.1.y, star.1.z
+                ));
+
+                let draw = ui
+                    .get_background_draw_list()
+                    .add_circle([star.1.x, star.1.y], 5.0, [1.0, 0.0, 0.0])
+                    .thickness(1.0)
+                    .build();
+            }
+
 
             if self.demo_window_opened {
                 ui.show_demo_window(&mut true);
@@ -122,17 +154,13 @@ impl AppUi {
             let base_speed = 0.073;
 
             if ui.is_key_down(imgui::Key::W) {
-                appcore
-                    .camera
-                    .translate(0.0, 0.0, -1.0);
+                appcore.camera.translate(0.0, 0.0, -1.0);
             }
             if ui.is_key_down(imgui::Key::S) {
                 appcore.camera.translate(0.0, 0.0, 1.0);
             }
             if ui.is_key_down(imgui::Key::A) {
-                appcore
-                    .camera
-                    .translate(-1.0, 0.0, 0.0);
+                appcore.camera.translate(-1.0, 0.0, 0.0);
             }
             if ui.is_key_down(imgui::Key::D) {
                 appcore.camera.translate(1.0, 0.0, 0.0);

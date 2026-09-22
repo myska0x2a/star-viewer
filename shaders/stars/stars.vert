@@ -50,9 +50,9 @@ mat4 ortho(float left, float right, float bottom, float top, float near, float f
 // https://moonside.games/posts/sdl-gpu-sprite-batcher/
 const uint[6] triangleIndices = {0, 1, 2, 3, 2, 1};
 const vec2 vertexPos[4] = { 
-    {0.0f, 0.0f},
-    {0.5f, 0.0f},
-    {0.0f, 0.5f},
+    {-0.5f, -0.5f},
+    {0.5f, -0.5f},
+    {-0.5f, 0.5f},
     {0.5f, 0.5f}
 };
 
@@ -80,14 +80,14 @@ mat3x3 rot3d(float rx, float ry, float rz) {
 		0, 0, 1
 	);
 
-	return z * y * x;
+	return x * y * z;
 }
 
 const float ZOOM = 1.f;
 const vec2 SCREEN_DIM = vec2(1920.f, 1200.f);
 const int TEX_DIMENSIONS = 15;
 
-const float STAR_SIZE_MULT = 0.03f;
+const float STAR_SIZE_MULT = 0.01f;
 const float MAX_STAR_SIZE = 0.02f;
 const float MIN_STAR_SIZE = 0.05f;
 
@@ -102,7 +102,7 @@ void main(void) {
 	starPos *= rotation_matrix;
 
 	// star coordinate projection to clip space
-	vec4 starPosNDC = vec4(starPos, 1.f) * projection_matrix;
+	vec4 starPosClip = projection_matrix * vec4(starPos, 1.f);
 
 	// finding distance to star
 	float dist = sqrt(starPos.x*starPos.x + starPos.y*starPos.y + starPos.z*starPos.z);
@@ -116,8 +116,9 @@ void main(void) {
 	squareVert.x *= (SCREEN_DIM.y / SCREEN_DIM.x);
 
 	// billboard position assignment (within clip space)
-	vec4 billboardNDC = starPosNDC + vec4(squareVert * starPosNDC.w, 0.f, 0.f);
-	gl_Position = vec4(billboardNDC.xy, 0.f, billboardNDC.w);
+	vec4 billboardClip = starPosClip + vec4(squareVert * starPosClip.w, 0.f, 0.f);
+	gl_Position = vec4(billboardClip.xy, 0.f, billboardClip.w);
+
 
 	// coloring
 	float temp = ciToTemperature(star.ci);

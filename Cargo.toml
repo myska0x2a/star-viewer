@@ -7,7 +7,7 @@ edition = "2024"
 opt-level = 3
 
 [dependencies]
-cgmath = "0.18.0"
+cgmath = { version = "0.18.0", features = ["swizzle"] }
 csv = "1.4.0"
 env_logger = "0.11.10"
 imgui = "0.12.0"

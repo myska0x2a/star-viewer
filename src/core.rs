@@ -8,7 +8,7 @@ use cgmath::InnerSpace;
 use cgmath::PerspectiveFov;
 use cgmath::Rad;
 use cgmath::Rotation;
-use cgmath::{Deg, Matrix3, Rotation3, Vector3, Matrix4};
+use cgmath::{Deg, Matrix3, Matrix4, Rotation3, Vector3};
 use log::{info, warn};
 use sdl3::Sdl;
 use sdl3::event::*;
@@ -21,7 +21,7 @@ pub struct Camera {
     pub move_speed: f32,
     pub fov: f32,
     pub range: f32,
-    reload_distance: f32,
+    pub reload_distance: f32,
     last_reload_pos: Vector3<f32>,
 }
 
@@ -30,11 +30,10 @@ impl Camera {
         if ((self.orientation.y > -PI) && (self.orientation.y < PI))
             || (self.orientation.y * y < 0.0)
         {
-            self.orientation.y += y * self.sensitivity;
+            self.orientation.y += y * (self.sensitivity / self.fov);
         }
 
-        self.orientation.z += z * self.sensitivity;
-
+        self.orientation.z += z * (self.sensitivity / self.fov);
     }
 
     pub fn translate(&mut self, x: f32, y: f32, z: f32) {
@@ -46,7 +45,11 @@ impl Camera {
         let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
         let rotmatz = Basis3::<f32>::from_angle_z(Rad(rotz));
 
-        let mut translation_unit = Vector3 { x: x * self.move_speed, y: y * self.move_speed, z: z * self.move_speed };
+        let mut translation_unit = Vector3 {
+            x: x * self.move_speed,
+            y: y * self.move_speed,
+            z: z * self.move_speed,
+        };
 
         translation_unit = rotmatx.rotate_vector(translation_unit);
         translation_unit = rotmaty.rotate_vector(translation_unit);
@@ -58,7 +61,7 @@ impl Camera {
     pub fn check_reload(&mut self) -> bool {
         let mut reload = false;
 
-        let delta_pos = self.pos - self.last_reload_pos; 
+        let delta_pos = self.pos - self.last_reload_pos;
 
         if delta_pos.magnitude() > self.reload_distance {
             self.last_reload_pos = self.pos;
@@ -87,7 +90,7 @@ impl Default for Camera {
             orientation: Vector3::new(0.0, 0.0, 0.0),
             sensitivity: 1.0,
             move_speed: 0.15,
-            fov: 3.1,
+            fov: 0.65 * PI, // supposedly main human fov ish
             range: 2.0,
             reload_distance: 3.0,
             last_reload_pos: Vector3::new(0.0, 0.0, 0.0),

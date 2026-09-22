@@ -88,7 +88,13 @@ impl<'a> StarRenderer<'a> {
 
         let range = 1.0;
 
-        let (star_buffer, num_stars) = load_star_buffer(device, window, &appcore.star_handler, range, appcore.camera.pos)?;
+        let (star_buffer, num_stars) = load_star_buffer(
+            device,
+            window,
+            &appcore.star_handler,
+            range,
+            appcore.camera.pos,
+        )?;
 
         return Ok(Self {
             pipeline: pipeline,
@@ -108,8 +114,6 @@ impl<'a> StarRenderer<'a> {
         camera: &Camera,
         resources: &ResourceManager,
     ) -> Result<(), Box<dyn std::error::Error>> {
-
-
         #[allow(unused)]
         #[repr(align(16))]
         #[derive(Copy, Clone)]
@@ -121,7 +125,8 @@ impl<'a> StarRenderer<'a> {
 
         let window_size = window.size();
         let projection_matrix =
-            camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
+            // camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
+            camera.get_projection_matrix(1920.0, 1200.0);
 
         let uniform_data = UniformData {
             projection_matrix: Matrix4::from(projection_matrix),
@@ -172,8 +177,13 @@ impl<'a> StarRenderer<'a> {
         window: &Window,
         appcore: &AppCore,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        (self.star_buffer, self.num_stars) =
-            load_star_buffer(&device, &window, &appcore.star_handler, appcore.camera.range, appcore.camera.pos)?;
+        (self.star_buffer, self.num_stars) = load_star_buffer(
+            &device,
+            &window,
+            &appcore.star_handler,
+            appcore.camera.range,
+            appcore.camera.pos,
+        )?;
         Ok(())
     }
 }

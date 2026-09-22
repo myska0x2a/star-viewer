@@ -38,14 +38,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // check if the camera has moved far enough. if so, reload the star buffer.
             if appcore.camera.check_reload() {
-                        renderer.star_renderer.reload(
-                            &renderer.device,
-                            &renderer.window,
-                            &appcore,
-                            // renderer.star_renderer.range,
-                        )?;
+                renderer.star_renderer.reload(
+                    &renderer.device,
+                    &renderer.window,
+                    &appcore,
+                    // renderer.star_renderer.range,
+                )?;
 
-                        println!("reload");
+                println!("reload");
             }
 
             match event {
@@ -83,8 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // range changing
                     if x != 0.0f32 {
-                        appcore.camera.range =
-                            (appcore.camera.range + x).clamp(0.2, 9999999.0);
+                        appcore.camera.range = (appcore.camera.range + x).clamp(0.2, 9999999.0);
 
                         renderer.star_renderer.reload(
                             &renderer.device,

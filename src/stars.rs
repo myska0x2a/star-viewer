@@ -1,10 +1,10 @@
 //! Loading and handling of stars.
 use crate::core::Camera;
-use cgmath::{Basis3, Matrix4, Rad, Rotation, Rotation3, Transform, Vector3, Vector4};
+use cgmath::{Basis3, Matrix3, Matrix4, Rad, Rotation, Rotation3, Transform, Vector3, Vector4};
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use serde::Deserialize;
-use std::io;
+use std::{io, ops::Mul};
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -110,9 +110,10 @@ impl StarHandler {
     pub fn get_nearby(&self, radius: f64, pos: Vector3<f32>) -> Vec<&Star> {
         debug!("StarHandler retreiving nearby stars");
         let mut nearby = Vec::new();
-        let within = self
-            .tree
-            .within::<SquaredEuclidean>(&[pos.x as f64, pos.y as f64, pos.z as f64], radius.powf(2.0));
+        let within = self.tree.within::<SquaredEuclidean>(
+            &[pos.x as f64, pos.y as f64, pos.z as f64],
+            radius.powf(2.0),
+        );
 
         for neighbor in within {
             nearby.push(self.stars.get(neighbor.item as usize).unwrap());
@@ -134,38 +135,53 @@ impl StarHandler {
         detection_radius: f32,
         w: f32,
         h: f32,
-    ) -> Vec<(String, Vector4<f32>)> {
+    ) -> Vec<(String, Vector3<f32>)> {
+        println!("search");
+
+        let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(1920.0, 1200.0));
+
+        // println!("nearby projection matrix: {:?}", projection_matrix);
+
+        let mut positions: Vec<(String, Vector3<f32>)> = Vec::new();
         let nearby = self.get_nearby(range as f64, camera.pos);
 
-        let projection_matrix: Matrix4<f32> = Matrix4::from(camera.get_projection_matrix(w, h));
 
-
-        let rotx = -camera.orientation.y;
-        let roty = -camera.orientation.z;
-        let rotz = -camera.orientation.x;
+        let rotx = camera.orientation.y;
+        let roty = camera.orientation.z;
+        let rotz = camera.orientation.x;
 
         let rotmatx = Basis3::<f32>::from_angle_x(Rad(rotx));
         let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
         let rotmatz = Basis3::<f32>::from_angle_z(Rad(rotz));
 
-        let mut positions: Vec<(String, Vector4<f32>)> = Vec::new();
+
 
         for star in nearby {
-            let mut pos = Vector3::from((star.x as f32, star.y as f32, star.z as f32)) - camera.pos;
-            // pos = rotation_matrix.rotate_vector(pos);
+            let mut starpos = Vector3::from((star.x as f32, star.y as f32, star.z as f32)) - camera.pos;
 
-            pos = rotmatx.rotate_vector(pos);
-            pos = rotmaty.rotate_vector(pos);
-            pos = rotmatz.rotate_vector(pos);
+            starpos = rotmatx.rotate_vector(starpos);
+            starpos = rotmaty.rotate_vector(starpos);
+            starpos = rotmatz.rotate_vector(starpos);
 
-            let mut starposndc = projection_matrix * Vector4::from((pos.x, pos.y, pos.z, 1.0));
-            // starposndc.x *= w;
-            // starposndc.y *= h;
+            // let rotation_matrix = rot3d(camera.orientation.x, camera.orientation.y, camera.orientation.z);
+            // starpos = rotation_matrix * starpos;
 
-            println!("Star: {}, Screen Pos: {:?}", star.name(), starposndc);
+            let projection_matrix = camera.get_projection_matrix(1920.0, 1200.0);
+            let starposclip = Matrix4::from(projection_matrix) * Vector4::from((starpos.x, starpos.y, starpos.z, 1.0));
 
-            positions.push((star.name(), starposndc));
+            let screen_position = clip_to_viewport(starposclip, 1920.0, 1200.0);
+            
+            let starndc = starposclip.xyz() / starposclip.w;
+
+            let dist = (star.x*star.x + star.y*star.y + star.z*star.z).sqrt() + 0.1;
+
+            // println!("{} NDC : {}, {}, {}", star.name(), starndc.x, starndc.y, starndc.z);
+            // println!("Screen position: {}, {}, {}\n", screen_position.x, screen_position.y, dist);
+
+            positions.push((star.name(), Vector3::from([screen_position.x, screen_position.y, dist as f32/(star.absmag*star.absmag)])));
         }
+
+        println!("search done");
 
         return positions;
     }
@@ -177,4 +193,133 @@ impl StarHandler {
     pub fn get_tree(&self) -> &KdTree<f64, u32, 3, 32, u32> {
         return &self.tree;
     }
+
 }
+
+// https://www.songho.ca/opengl/gl_viewport.html
+fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Vector3<f32> {
+    // conversion to actual ndc coordinates
+    // https://stackoverflow.com/questions/22886853/how-to-convert-projected-points-to-screen-coordinatesviewport-matrix 
+    let ndc = clip.xyz() / clip.w;
+
+    // no ndc conversion
+    // let ndc = clip.xyz();
+
+    // far/near clip values
+    let n = 0.01;
+    let f = 1.1;
+    
+    // bottom/left corners of viewport
+    let x = 0.0;
+    let y = 0.0;
+
+    // let viewport_transform = Matrix4::from_cols(
+    //         Vector4 {
+    //             x: w/2.0,
+    //             y: 0.0,
+    //             z: 0.0,
+    //             w: 0.0,
+    //         },
+    //         Vector4 {
+    //             x: 0.0,
+    //             y: h/2.0,
+    //             z: 0.0,
+    //             w: 0.0,
+    //         },
+    //         Vector4 {
+    //             x: 0.0,
+    //             y: 0.0,
+    //             z: (f-n)/2.0,
+    //             w: 0.0,
+    //         },
+    //         Vector4 {
+    //             x: x+(w/2.0),
+    //             y: y+(h/2.0),
+    //             z: (f+n)/2.0,
+    //             w: 1.0,
+    //         },
+    //     );
+
+    // let screen_coord = viewport_transform * Vector4::from((ndc.x, ndc.y, ndc.z, 1.0)); 
+
+    // let screenx = (ndc.x + 1.0) * (w/2.0);
+    // let screeny = 1200.0 - ((ndc.y + 1.0) * (h/2.0));
+    
+    // let screenx = ((ndc.x) + 0.5) * (w/2.0);
+    // let screeny = 1200.0 - ((ndc.y) + 0.5) * (h/2.0);
+
+    // let screenx = ((w / 2.0) * ndc.x) + (x + (w / 2.0));
+    // let screeny = ((h / 2.0) * ndc.y) + (y + (h / 2.0));
+    
+    // https://stackoverflow.com/questions/57938025/how-does-a-camera-convert-from-clip-space-into-screen-space
+    let screenx = (ndc.x + 1.0) * 0.5 * (w - 1.0);
+    let screeny = (1.0 - (ndc.y + 1.0) * 0.5) * (h - 1.0);
+    let screenz = (ndc.z + 1.0) * (f - n) / 2.0 + n;
+
+
+    let screen_coord = Vector3::from((screenx, screeny, screenz));
+
+    return screen_coord.xyz();
+}
+
+
+
+
+fn rot3d(rx: f32, ry: f32, rz: f32) -> Matrix3<f32> {
+    let matx = Matrix3::from_cols(
+        Vector3 {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Vector3 {
+            x: 0.0,
+            y: rx.cos(),
+            z: rx.sin(),
+        },
+        Vector3 {
+            x: 0.0,
+            y: -rx.sin(),
+            z: rx.cos(),
+        },
+    );
+
+    let maty = Matrix3::from_cols(
+        Vector3 {
+            x: ry.cos(),
+            y: 0.0,
+            z: -ry.sin(),
+        },
+        Vector3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        Vector3 {
+            x: ry.sin(),
+            y: 0.0,
+            z: ry.cos(),
+        },
+    );
+
+    let matz = Matrix3::from_cols(
+        Vector3 {
+            x: rz.cos(),
+            y: rz.sin(),
+            z: 0.0,
+        },
+        Vector3 {
+            x: -rz.sin(),
+            y: rz.cos(),
+            z: 0.0,
+        },
+        Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
+    );
+
+    return matz * maty * matz;
+}
+
