@@ -39,15 +39,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // check if the camera has moved far enough. if so, reload the star buffer.
             if appcore.camera.check_reload() {
-                renderer.star_renderer.reload(
-                    &renderer.device,
-                    &renderer.window,
-                    &appcore,
-                )?;
+                renderer
+                    .star_renderer
+                    .reload(&renderer.device, &renderer.window, &appcore)?;
 
                 appui.reload_stars(&appcore);
-
-                println!("reload");
             }
 
             match event {
@@ -57,16 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     break 'main;
                 }
 
-                Event::MouseMotion {
-                    timestamp,
-                    window_id,
-                    which,
-                    mousestate,
-                    x,
-                    y,
-                    xrel,
-                    yrel,
-                } => {
+                Event::MouseMotion { xrel, yrel, .. } => {
                     if mousefocus {
                         if xrel != 0.0f32 {
                             appcore.camera.rotate(0.0, 0.0, xrel);
