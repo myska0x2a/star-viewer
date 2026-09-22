@@ -3,7 +3,7 @@ use crate::{
     core::{AppCore, Camera},
     stars::{PARSEC_LY, *},
 };
-use cgmath::{Vector4, Vector3};
+use cgmath::{Vector4, Vector3, Vector2, InnerSpace};
 use imgui::Ui;
 use log::info;
 use sdl3::event::*;
@@ -125,10 +125,15 @@ impl AppUi {
             }
 
 
-            if ui.is_mouse_clicked(imgui::MouseButton::Left) {
+            if ui.is_mouse_down(imgui::MouseButton::Left) {
                 let intersected_stars: Vec<Star> = Vec::new();
+                let mouse_pos = Vector2::from(ui.io().mouse_pos);
+                ui.text(format!("mouse pos: {:?}", mouse_pos));
                 for star in &self.nearby_stars {
                     if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
+                        let mouse_star_delta = scrpos.xy() - mouse_pos;
+                        let mouse_distance = (mouse_star_delta.x*mouse_star_delta.x + mouse_star_delta.y*mouse_star_delta.y).sqrt();
+                        ui.text(format!("distance from {}: {}", star.name(), mouse_distance));
 
                     }
                 }
