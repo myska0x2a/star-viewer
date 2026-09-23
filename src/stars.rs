@@ -18,13 +18,18 @@ pub struct Star {
     pub hr: Option<i32>,
     pub gl: Option<String>,
     pub bf: Option<String>,
+    pub ra: f32,
+    pub dec: f32,
     pub proper: Option<String>,
     pub dist: f64,
+    pub rv: f32,
     pub absmag: f32,
     pub ci: Option<f32>,
+    pub spec: Option<String>,
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    pub lum: f32,
 }
 
 impl Star {
@@ -38,14 +43,22 @@ impl Star {
         if let Some(bf) = &self.bf {
             return bf.clone();
         }
-        // gleise
-        if let Some(gl) = &self.gl {
-            return gl.clone();
-        }
+
         // henry draper
         if let Some(hd) = &self.hd {
             return String::from(format!("HD {}", hd));
         }
+
+        // gleise
+        if let Some(gl) = &self.gl {
+            return gl.clone();
+        }
+
+        // hipparcos
+        if let Some(hip) = &self.hip {
+            return String::from(format!("HIP {}", hip));
+        }
+        
         // harvard revised
         if let Some(hr) = &self.hr {
             return String::from(format!("HR {}", hr));
