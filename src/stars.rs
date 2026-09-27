@@ -7,8 +7,8 @@ use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
 use nucleo::*;
 use serde::Deserialize;
-use std::{io, ops::Mul};
 use std::sync::Arc;
+use std::{io, ops::Mul};
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -137,7 +137,7 @@ fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Option<Vector3<f32>> 
 pub struct StarHandler {
     stars: Vec<Star>,
     tree: KdTree<f64, u32, 3, 32, u32>,
-    pub nucleo: Nucleo<String>,
+    pub nucleo: Nucleo<Star>,
     range: f32,
 }
 
@@ -146,7 +146,7 @@ impl StarHandler {
         info!("Init star handler");
         let config = nucleo::Config::DEFAULT;
         let notify = Arc::new(|| {});
-        let nucleo = Nucleo::new(config, notify, Some(3), 3);
+        let nucleo = Nucleo::new(config, notify, Some(4), 1);
 
         return StarHandler {
             stars: Vec::new(),
@@ -156,11 +156,11 @@ impl StarHandler {
         };
     }
 
-
-
     // load the star data into the handler
     pub fn load(&mut self, path: String) -> Result<(), Box<dyn std::error::Error>> {
         info!("Loading stars from {}", path);
+        let injector = self.nucleo.injector();
+
         let mut stars: Vec<Star> = Vec::new();
         let mut tree = KdTree::new();
         let mut id: u32 = 0;
@@ -168,7 +168,13 @@ impl StarHandler {
 
         for result in rdr.deserialize() {
             let star: Star = result?;
+
             tree.add(&[star.x, star.y, star.z], id);
+
+            injector.push(star.clone(), |star, columns| {
+                columns[0] = star.name().as_str().into();
+            });
+
             stars.push(star);
             id = id + 1;
         }

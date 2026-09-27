@@ -89,13 +89,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         appcore.camera.movable = true;
                         mouse.set_relative_mouse_mode(&renderer.window, true);
                         sdl.video()?.text_input().stop(&renderer.window);
-
                     }
                     if keycode == Some(Keycode::Escape) {
                         appcore.camera.movable = false;
                         mouse.set_relative_mouse_mode(&renderer.window, false);
                         sdl.video()?.text_input().start(&renderer.window);
-
+                        appui.search_window_open = false;
                     }
                 }
                 _ => {}

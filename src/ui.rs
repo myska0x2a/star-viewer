@@ -18,7 +18,7 @@ pub struct AppUi {
     selected_star: Option<Star>,
     star_scale: f32,
     fade_labels: bool,
-    search_window_open: bool,
+    pub search_window_open: bool,
     current_search: String,
 }
 
@@ -42,29 +42,42 @@ impl AppUi {
         |ui| {
             let global_window_size = [1920.0, 1200.0];
 
-            if self.search_window_open { 
-                ui.window("search window")
-                    .size([400.0, 400.0], imgui::Condition::FirstUseEver)
-                    .position([20.0, 500.0], imgui::Condition::FirstUseEver)
-                    .build(|| {
+            if ui.is_key_pressed(imgui::Key::Slash) {
+                self.search_window_open = true;
+                ui.open_popup("search");
+            }
+
+            if self.search_window_open {
+                ui.modal_popup_config("search").resizable(false).movable(false).build(|| {
+
+                    ui.window("search window").build(|| {
+                        let text_input = ui.input_text("search", &mut self.current_search).build();
+                        if text_input && !self.current_search.is_empty() {
+                            appcore.star_handler.nucleo.pattern.reparse(
+                                0,
+                                &self.current_search,
+                                nucleo::pattern::CaseMatching::Smart,
+                                nucleo::pattern::Normalization::Smart,
+                                false, // might need to work something out for optimization
+                            );
+                        }
+
                         appcore.star_handler.nucleo.tick(10);
-                        let injector = appcore.star_handler.nucleo.injector();
                         let snapshot = appcore.star_handler.nucleo.snapshot();
 
-                        let mut search = String::new();
-                        let text_input = ui.input_text("search", &mut self.current_search).build();
-
-                        if text_input {
-                            injector.push(self.current_search.clone(), |_, _| {});
-                        }
-
-                        for i in 0..snapshot.item_count() {
-                            let item = snapshot.get_matched_item(i);
-                            if let Some(item) = item {
-                                let star = item.data;
+                        if !self.current_search.is_empty() {
+                            for i in 0..snapshot.item_count() {
+                                let item = snapshot.get_matched_item(i);
+                                if let Some(item) = item {
+                                    let star = item.data;
+                                    ui.separator();
+                                    ui.text(format!("{}", star.name()));
+                                    star_info_small(ui, star, appcore);
+                                }
                             }
                         }
-                    });
+                    })
+                });
             }
 
             // top menu bar
@@ -251,7 +264,7 @@ impl AppUi {
             }
 
             // movement controls
-            if appcore.camera.movable {  
+            if appcore.camera.movable {
                 let base_speed = 0.073;
                 if ui.is_key_down(imgui::Key::W) {
                     appcore.camera.translate(0.0, 0.0, -1.0);
