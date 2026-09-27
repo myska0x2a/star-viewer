@@ -6,17 +6,11 @@ use crate::{
 use cgmath::{InnerSpace, Vector2, Vector3, Vector4};
 use imgui::Ui;
 use log::info;
+use nucleo::*;
 use sdl3::event::*;
 use std::{f32::consts::PI, mem::transmute};
 
-#[derive(Default)]
-struct StarRendererStatus {
-    stars_loaded: usize,
-    range: f32,
-}
-
 pub struct AppUi {
-    star_renderer_status: StarRendererStatus,
     demo_window_opened: bool,
     positions_window_opened: bool,
     view_controls_window_opened: bool,
@@ -24,13 +18,14 @@ pub struct AppUi {
     selected_star: Option<Star>,
     star_scale: f32,
     fade_labels: bool,
+    search_window_open: bool,
+    current_search: String,
 }
 
 impl AppUi {
     pub fn new() -> Self {
         info!("Init UI handler");
         AppUi {
-            star_renderer_status: StarRendererStatus::default(),
             demo_window_opened: false,
             positions_window_opened: true,
             view_controls_window_opened: true,
@@ -38,12 +33,39 @@ impl AppUi {
             selected_star: None,
             star_scale: 1.0,
             fade_labels: false,
+            search_window_open: true,
+            current_search: String::new(),
         }
     }
 
     pub fn build_ui(&mut self, appcore: &mut AppCore) -> impl FnMut(&mut Ui) {
         |ui| {
-            let global_window_size = [ 1920.0, 1200.0 ];
+            let global_window_size = [1920.0, 1200.0];
+
+            if self.search_window_open { 
+                ui.window("search window")
+                    .size([400.0, 400.0], imgui::Condition::FirstUseEver)
+                    .position([20.0, 500.0], imgui::Condition::FirstUseEver)
+                    .build(|| {
+                        appcore.star_handler.nucleo.tick(10);
+                        let injector = appcore.star_handler.nucleo.injector();
+                        let snapshot = appcore.star_handler.nucleo.snapshot();
+
+                        let mut search = String::new();
+                        let text_input = ui.input_text("search", &mut self.current_search).build();
+
+                        if text_input {
+                            injector.push(self.current_search.clone(), |_, _| {});
+                        }
+
+                        for i in 0..snapshot.item_count() {
+                            let item = snapshot.get_matched_item(i);
+                            if let Some(item) = item {
+                                let star = item.data;
+                            }
+                        }
+                    });
+            }
 
             // top menu bar
             let main_menu = ui.main_menu_bar(|| {
@@ -66,7 +88,6 @@ impl AppUi {
                     ui.text("no star selected");
                 }
                 ui.separator();
-
 
                 // view controls window
                 if self.view_controls_window_opened {
@@ -181,10 +202,9 @@ impl AppUi {
 
                     });
 
-            if !star_window {
-                self.selected_star = None;
-            }
-                
+                if !star_window {
+                    self.selected_star = None;
+                }
             }
 
             // imgui demo window
@@ -196,10 +216,11 @@ impl AppUi {
             for star in &self.nearby_stars {
                 let projected = star.get_screencoord(&appcore.camera, 1920.0, 1200.0);
                 if let Some(scrpos) = projected {
-                    let star_radius = get_star_radius(&star, appcore.camera.pos) * 3.0; 
+                    let star_radius = get_star_radius(&star, appcore.camera.pos) * 3.0;
                     let mut label_colour = 255;
                     if self.fade_labels {
-                        label_colour = (20 / (star.dist(appcore.camera.pos) as i32).clamp(1, 99999)).clamp(0, 255) as u8;
+                        label_colour = (20 / (star.dist(appcore.camera.pos) as i32).clamp(1, 99999))
+                            .clamp(0, 255) as u8;
                     }
 
                     if (star.dist(appcore.camera.pos) < 3.0) {
@@ -215,12 +236,13 @@ impl AppUi {
             // highlighting selected star
             if let Some(star) = &self.selected_star {
                 if let Some(scrpos) = star.get_screencoord(&appcore.camera, 1920.0, 1200.0) {
-                    let star_radius = get_star_radius(&star, appcore.camera.pos); 
+                    let star_radius = get_star_radius(&star, appcore.camera.pos);
                     let draw = ui
                         .get_background_draw_list()
                         .add_circle(
                             [scrpos.x as f32, scrpos.y as f32],
-                            (5.0 * star_radius).clamp(global_window_size[0] / 200.0, global_window_size[0]),
+                            (5.0 * star_radius)
+                                .clamp(global_window_size[0] / 200.0, global_window_size[0]),
                             [1.0, 0.0, 0.0],
                         )
                         .thickness(1.0)
@@ -229,18 +251,20 @@ impl AppUi {
             }
 
             // movement controls
-            let base_speed = 0.073;
-            if ui.is_key_down(imgui::Key::W) {
-                appcore.camera.translate(0.0, 0.0, -1.0);
-            }
-            if ui.is_key_down(imgui::Key::S) {
-                appcore.camera.translate(0.0, 0.0, 1.0);
-            }
-            if ui.is_key_down(imgui::Key::A) {
-                appcore.camera.translate(-1.0, 0.0, 0.0);
-            }
-            if ui.is_key_down(imgui::Key::D) {
-                appcore.camera.translate(1.0, 0.0, 0.0);
+            if appcore.camera.movable {  
+                let base_speed = 0.073;
+                if ui.is_key_down(imgui::Key::W) {
+                    appcore.camera.translate(0.0, 0.0, -1.0);
+                }
+                if ui.is_key_down(imgui::Key::S) {
+                    appcore.camera.translate(0.0, 0.0, 1.0);
+                }
+                if ui.is_key_down(imgui::Key::A) {
+                    appcore.camera.translate(-1.0, 0.0, 0.0);
+                }
+                if ui.is_key_down(imgui::Key::D) {
+                    appcore.camera.translate(1.0, 0.0, 0.0);
+                }
             }
 
             // detecting clicks on stars
@@ -255,7 +279,10 @@ impl AppUi {
                             .sqrt();
 
                         // todo: depth/distance priority
-                        if mouse_distance < (5.0 * get_star_radius(star, appcore.camera.pos)).clamp(global_window_size[0] / 40.0, global_window_size[0]) {
+                        if mouse_distance
+                            < (5.0 * get_star_radius(star, appcore.camera.pos))
+                                .clamp(global_window_size[0] / 40.0, global_window_size[0])
+                        {
                             self.selected_star = Some(star.clone());
                         }
                     }
@@ -284,13 +311,16 @@ fn get_star_radius(star: &Star, pos: Vector3<f32>) -> f32 {
 }
 
 fn star_info_small(ui: &Ui, star: &Star, appcore: &AppCore) {
-    if ui.button("look at") {
+    if ui.button("look at") {}
 
-    }
-
-    ui.text(format!("distance from camera: {:.2} lightyears", star.dist_ly(appcore.camera.pos)));
-    ui.text(format!("distance from sol: {:.2} lightyears", star.dist_ly(Vector3::from([0.0, 0.0, 0.0]))));
-
+    ui.text(format!(
+        "distance from camera: {:.2} lightyears",
+        star.dist_ly(appcore.camera.pos)
+    ));
+    ui.text(format!(
+        "distance from sol: {:.2} lightyears",
+        star.dist_ly(Vector3::from([0.0, 0.0, 0.0]))
+    ));
 }
 
 fn angle_to_dms(angle: f32) -> (f32, f32, f32) {

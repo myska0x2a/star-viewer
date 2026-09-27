@@ -92,9 +92,9 @@ impl<'a> AppRenderer<'a> {
 
             let star_color_target = [ColorTargetInfo::default()
                 .with_texture(&swapchain)
-                .with_load_op(LoadOp::LOAD)
+                .with_load_op(LoadOp::CLEAR)
                 .with_store_op(StoreOp::STORE)
-                .with_clear_color(Color::RGB(128, 128, 128))];
+                .with_clear_color(Color::RGB(0, 0, 0))];
 
             let camera = appcore.camera.clone();
 

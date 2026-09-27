@@ -5,8 +5,10 @@ use cgmath::{
 };
 use kiddo::float::{distance::SquaredEuclidean, kdtree::KdTree};
 use log::{debug, info, trace, warn};
+use nucleo::*;
 use serde::Deserialize;
 use std::{io, ops::Mul};
+use std::sync::Arc;
 
 pub const PARSEC_LY: f64 = 3.262;
 
@@ -58,7 +60,7 @@ impl Star {
         if let Some(hip) = &self.hip {
             return String::from(format!("HIP {}", hip));
         }
-        
+
         // harvard revised
         if let Some(hr) = &self.hr {
             return String::from(format!("HR {}", hr));
@@ -132,22 +134,29 @@ fn clip_to_viewport(clip: Vector4<f32>, w: f32, h: f32) -> Option<Vector3<f32>> 
     return None;
 }
 
-#[derive(Clone)]
 pub struct StarHandler {
     stars: Vec<Star>,
     tree: KdTree<f64, u32, 3, 32, u32>,
+    pub nucleo: Nucleo<String>,
     range: f32,
 }
 
 impl StarHandler {
     pub fn new() -> StarHandler {
         info!("Init star handler");
+        let config = nucleo::Config::DEFAULT;
+        let notify = Arc::new(|| {});
+        let nucleo = Nucleo::new(config, notify, Some(3), 3);
+
         return StarHandler {
             stars: Vec::new(),
             tree: KdTree::new(),
+            nucleo,
             range: 3.0,
         };
     }
+
+
 
     // load the star data into the handler
     pub fn load(&mut self, path: String) -> Result<(), Box<dyn std::error::Error>> {

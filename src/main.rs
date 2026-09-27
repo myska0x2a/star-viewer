@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 Event::MouseMotion { xrel, yrel, .. } => {
-                    if mousefocus {
+                    if appcore.camera.movable {
                         if xrel != 0.0f32 {
                             appcore.camera.rotate(0.0, 0.0, xrel);
                         }
@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Event::MouseWheel { x, y, .. } => {
                     // fov control
-                    if mousefocus && (y != 0.0f32) {
+                    if appcore.camera.movable && (y != 0.0f32) {
                         let new_fov = appcore.camera.fov + (y / 40.0);
                         appcore.camera.fov = new_fov.clamp(0.0000001, 3.14);
                     }
@@ -86,12 +86,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let mouse = sdl.mouse();
 
                     if keycode == Some(Keycode::Return) {
-                        mousefocus = true;
+                        appcore.camera.movable = true;
                         mouse.set_relative_mouse_mode(&renderer.window, true);
+                        sdl.video()?.text_input().stop(&renderer.window);
+
                     }
                     if keycode == Some(Keycode::Escape) {
-                        mousefocus = false;
+                        appcore.camera.movable = false;
                         mouse.set_relative_mouse_mode(&renderer.window, false);
+                        sdl.video()?.text_input().start(&renderer.window);
+
                     }
                 }
                 _ => {}

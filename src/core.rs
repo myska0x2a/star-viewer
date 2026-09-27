@@ -23,6 +23,7 @@ pub struct Camera {
     pub range: f32,
     pub reload_distance: f32,
     last_reload_pos: Vector3<f32>,
+    pub movable: bool,
 }
 
 impl Camera {
@@ -94,6 +95,7 @@ impl Default for Camera {
             range: 10.0,
             reload_distance: 0.1,
             last_reload_pos: Vector3::new(0.0, 0.0, 0.0),
+            movable: true,
         };
     }
 }
