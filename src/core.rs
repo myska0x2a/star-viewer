@@ -28,7 +28,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn rotate(&mut self, x: f32, y: f32, z: f32) {
-        if ((self.orientation.y > -PI) && (self.orientation.y < PI))
+        if ((self.orientation.y > -PI/2.0) && (self.orientation.y < PI/2.0))
             || (self.orientation.y * y < 0.0)
         {
             self.orientation.y += y * self.sensitivity;
