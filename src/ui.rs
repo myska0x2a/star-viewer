@@ -42,15 +42,28 @@ impl AppUi {
         |ui| {
             let global_window_size = [1920.0, 1200.0];
 
+            let colour =[150.0, 0.0, 0.0, 255.0];
+
+
+            let mut focus_keyboard_search = false;
             if ui.is_key_pressed(imgui::Key::Slash) {
                 self.search_window_open = true;
+                focus_keyboard_search = true;
                 ui.open_popup("search");
             }
 
             if self.search_window_open {
-                ui.modal_popup_config("search").resizable(false).movable(false).build(|| {
-
-                    ui.window("search window").build(|| {
+                ui.modal_popup_config("search")
+                    .resizable(false)
+                    .movable(false)
+                    .title_bar(false)
+                    .always_auto_resize(true)
+                    // .always_use_window_padding(true)
+                    .build(|| {
+                        ui.child_window("search window").size([400.0, 600.0]).build(|| {
+                        if focus_keyboard_search {
+                            ui.set_keyboard_focus_here();
+                        }
                         let text_input = ui.input_text("search", &mut self.current_search).build();
                         if text_input && !self.current_search.is_empty() {
                             appcore.star_handler.nucleo.pattern.reparse(
@@ -71,13 +84,13 @@ impl AppUi {
                                 if let Some(item) = item {
                                     let star = item.data;
                                     ui.separator();
-                                    ui.text(format!("{}", star.name()));
+                                    ui.text_colored([255.0/255.0, 0.0, 0.0, 255.0/255.0], format!("{}", star.name()));
                                     star_info_small(ui, star, appcore);
                                 }
                             }
                         }
-                    })
-                });
+                        })
+                    });
             }
 
             // top menu bar
@@ -135,7 +148,8 @@ impl AppUi {
             if let Some(star) = &self.selected_star {
                 ui.window(format!("{}", star.name()))
                     .size([400.0, 1000.0], imgui::Condition::FirstUseEver)
-                    .movable(true)
+                    .movable(false)
+                    .collapsible(false)
                     .opened(&mut star_window)
                     .position([global_window_size[0]-440.0, 40.0], imgui::Condition::FirstUseEver)
                     .build(|| {
@@ -301,6 +315,17 @@ impl AppUi {
                     }
                 }
             }
+
+            // controls
+            ui.window("controls")        
+            .position([20.0, (global_window_size[1] - 130.0)], imgui::Condition::FirstUseEver)
+            .draw_background(false)
+            .movable(false)
+            .resizable(false)
+            .title_bar(false)
+            .build(|| {
+                ui.text_colored(colour, "Move: WASD + Mouse\nShow/Recapture Cursor: ESC/ENTER\nSearch for stars: Slash (/)\n\nSelect a star by clicking on it"); 
+            });
         }
     }
 

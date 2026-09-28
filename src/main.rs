@@ -96,6 +96,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         sdl.video()?.text_input().start(&renderer.window);
                         appui.search_window_open = false;
                     }
+                    if keycode == Some(Keycode::Slash) {
+                        appcore.camera.movable = false;
+                        mouse.set_relative_mouse_mode(&renderer.window, false);
+                        sdl.video()?.text_input().start(&renderer.window);
+                        appui.search_window_open = true;
+                    }
                 }
                 _ => {}
             }

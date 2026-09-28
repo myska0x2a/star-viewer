@@ -6,6 +6,7 @@ use crate::resources::ResourceManager;
 use crate::stars::*;
 use crate::ui::AppUi;
 
+use imgui::sys::{ImGuiCol_, ImGuiCol_Border, ImGuiCol_Button, ImGuiCol_ButtonActive, ImGuiCol_ButtonHovered, ImGuiCol_CheckMark, ImGuiCol_FrameBg, ImGuiCol_FrameBgActive, ImGuiCol_FrameBgHovered, ImGuiCol_Header, ImGuiCol_ModalWindowDimBg, ImGuiCol_SliderGrab, ImGuiCol_SliderGrabActive, ImGuiCol_Tab, ImGuiCol_TitleBgActive};
 use log::{error, info};
 use std::marker::Copy;
 
@@ -53,6 +54,50 @@ impl<'a> AppRenderer<'a> {
             ctx.fonts()
                 // .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
                 .add_font(&[font]);
+
+            let style = ctx.style_mut();
+            style.frame_rounding = 7.0;
+            style.grab_rounding = 7.0;
+            style.window_rounding = 10.0;
+            style.tab_border_size = 0.5;
+
+            let colour = &mut style.colors;
+
+            let primary = [202.0/255.0, 0.0, 0.0, 255.0/255.0];
+
+            let elBG = [74.0/255.0, 74.0/255.0, 74.0/255.0, 138.0/255.0];
+            let elHV = [116.0/255.0, 116.0/255.0, 116.0/255.0, 102.0/255.0];
+            let elAC = [0.606, 0.606, 0.606, 0.4];
+
+
+            colour[ImGuiCol_FrameBg as usize] = elBG;
+            colour[ImGuiCol_FrameBgHovered as usize] = elHV;
+            colour[ImGuiCol_FrameBgActive as usize] = elAC;
+            colour[ImGuiCol_SliderGrab as usize] = elAC;
+            colour[ImGuiCol_SliderGrabActive as usize] = primary;
+
+
+            colour[ImGuiCol_Button as usize] = elBG;
+            colour[ImGuiCol_ButtonHovered as usize] = elHV;
+            colour[ImGuiCol_ButtonActive as usize] = primary;
+
+            colour[ImGuiCol_CheckMark as usize] = primary;
+
+
+            colour[ImGuiCol_TitleBgActive as usize] = primary;
+            colour[ImGuiCol_Header as usize] = primary;
+            colour[ImGuiCol_Tab as usize] = primary;
+            
+
+            colour[ImGuiCol_Border as usize] = primary;
+
+            colour[ImGuiCol_ModalWindowDimBg as usize] = [0.637, 0.368, 0.368, 0.350];
+
+
+
+
+
+
         });
 
         let mouse = sdl.mouse();
