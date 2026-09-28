@@ -9,6 +9,7 @@ use log::info;
 use nucleo::*;
 use sdl3::event::*;
 use std::{f32::consts::PI, mem::transmute};
+use std::ops::Deref;
 
 pub struct AppUi {
     demo_window_opened: bool,
@@ -58,7 +59,6 @@ impl AppUi {
                     .movable(false)
                     .title_bar(false)
                     .always_auto_resize(true)
-                    // .always_use_window_padding(true)
                     .build(|| {
                         ui.child_window("search window").size([400.0, 600.0]).build(|| {
                         if focus_keyboard_search {
@@ -76,16 +76,22 @@ impl AppUi {
                         }
 
                         appcore.star_handler.nucleo.tick(10);
-                        let snapshot = appcore.star_handler.nucleo.snapshot();
+
+
+                        let matched_item_count = appcore.star_handler.nucleo.snapshot().matched_item_count(); 
+                        let mut stars: Vec<Star> = Vec::new();
+                        for item in appcore.star_handler.nucleo.snapshot().matched_items(0..matched_item_count) {
+                            stars.push(item.data.clone());    
+                        }
 
                         if !self.current_search.is_empty() {
-                            for i in 0..snapshot.item_count() {
-                                let item = snapshot.get_matched_item(i);
-                                if let Some(item) = item {
-                                    let star = item.data;
-                                    ui.separator();
-                                    ui.text_colored([255.0/255.0, 0.0, 0.0, 255.0/255.0], format!("{}", star.name()));
-                                    star_info_small(ui, star, appcore);
+                            let mut index = 0;
+                            for star in stars {
+                                ui.separator();
+                                ui.text_colored([255.0/255.0, 0.0, 0.0, 255.0/255.0], format!("{}", star.name()));
+                                if star_info_small(ui, &star, appcore) {
+                                    self.selected_star = Some(star);
+                                    self.search_window_open = false;
                                 }
                             }
                         }
@@ -218,12 +224,7 @@ impl AppUi {
                             ui.text(format!("Spectral Type: Unknown"));
                         }
 
-
                         ui.text(format!("Radial Velocity: {} km/sec", star.rv));
-
-                         
-
-
 
                         ui.separator();
 
@@ -295,7 +296,7 @@ impl AppUi {
             }
 
             // detecting clicks on stars
-            if ui.is_mouse_clicked(imgui::MouseButton::Left) {
+            if ui.is_mouse_clicked(imgui::MouseButton::Left) && !self.search_window_open {
                 // self.selected_star = None;
                 let mouse_pos = Vector2::from(ui.io().mouse_pos);
                 for star in &self.nearby_stars {
@@ -348,8 +349,12 @@ fn get_star_radius(star: &Star, pos: Vector3<f32>) -> f32 {
     return lightmult;
 }
 
-fn star_info_small(ui: &Ui, star: &Star, appcore: &AppCore) {
-    if ui.button("look at") {}
+fn star_info_small(ui: &Ui, star: &Star, appcore: &mut AppCore) -> bool {
+    if ui.button(format!("go to star##{}", star.id)) {
+        appcore.camera.pos = Vector3 { x: star.x as f32, y: star.y as f32, z: (star.z + 1.0) as f32 };
+        appcore.camera.orientation = Vector3::from([0.0, 0.0, 0.0]);
+        return true;
+    }
 
     ui.text(format!(
         "distance from camera: {:.2} lightyears",
@@ -359,6 +364,8 @@ fn star_info_small(ui: &Ui, star: &Star, appcore: &AppCore) {
         "distance from sol: {:.2} lightyears",
         star.dist_ly(Vector3::from([0.0, 0.0, 0.0]))
     ));
+
+    return false;
 }
 
 fn angle_to_dms(angle: f32) -> (f32, f32, f32) {
