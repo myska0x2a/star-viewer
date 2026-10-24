@@ -11,24 +11,24 @@ use starviewer::ui::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // start logging
-    let logger_env = Env::default()
+    let logger_env: Env<'_> = Env::default()
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
 
-    let _logger = env_logger::Builder::from_env(logger_env)
+    env_logger::Builder::from_env(logger_env)
         .format_timestamp(None)
         .write_style(WriteStyle::Auto)
         .init();
 
-    let mut sdl = sdl3::init()?;
-    let mut appcore = AppCore::new()?;
-    let mut appui = AppUi::new();
+    let mut sdl: sdl3::Sdl = sdl3::init()?;
+    let mut appcore: AppCore = AppCore::new()?;
+    let mut appui: AppUi = AppUi::new();
 
     appcore.load()?;
     appui.reload_stars(&appcore);
 
-    let mut renderer = AppRenderer::init(&sdl, &appcore)?;
-    let resources = ResourceManager::load(&renderer.device, ".")?;
+    let mut renderer: AppRenderer<'_> = AppRenderer::init(&sdl, &appcore)?;
+    let resources: ResourceManager = ResourceManager::load(&renderer.device, ".")?;
 
     let mut mousefocus: bool = true;
     appcore.camera.sensitivity = 0.005;
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .reload(&renderer.device, &renderer.window, &appcore)?;
 
                 appui.reload_stars(&appcore);
-            }
+            };
 
             match event {
                 Event::Quit { .. } => {
@@ -52,23 +52,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     renderer.close()?;
                     break 'main;
                 }
-
                 Event::MouseMotion { xrel, yrel, .. } => {
                     if appcore.camera.movable {
                         if xrel != 0.0f32 {
                             appcore.camera.rotate(0.0, 0.0, xrel);
-                        }
+                        };
                         if yrel != 0.0f32 {
                             appcore.camera.rotate(0.0, yrel, 0.0);
-                        }
-                    }
+                        };
+                    };
                 }
                 Event::MouseWheel { x, y, .. } => {
                     // fov control
                     if appcore.camera.movable && (y != 0.0f32) {
                         let new_fov = appcore.camera.fov + (y / 40.0);
                         appcore.camera.fov = new_fov.clamp(0.0000001, 3.14);
-                    }
+                    };
 
                     // range changing
                     if x != 0.0f32 {
@@ -79,32 +78,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             &renderer.window,
                             &appcore,
                         )?;
-                    }
+                    };
                 }
-
                 Event::KeyDown { keycode, .. } => {
-                    let mouse = sdl.mouse();
-
-                    if keycode == Some(Keycode::Return) {
-                        appcore.camera.movable = true;
-                        mouse.set_relative_mouse_mode(&renderer.window, true);
-                        sdl.video()?.text_input().stop(&renderer.window);
-                    }
-                    if keycode == Some(Keycode::Escape) {
-                        appcore.camera.movable = false;
-                        mouse.set_relative_mouse_mode(&renderer.window, false);
-                        sdl.video()?.text_input().start(&renderer.window);
-                        appui.search_window_open = false;
-                    }
-                    if keycode == Some(Keycode::Slash) {
-                        appcore.camera.movable = false;
-                        mouse.set_relative_mouse_mode(&renderer.window, false);
-                        sdl.video()?.text_input().start(&renderer.window);
-                        appui.search_window_open = true;
-                    }
+                    let mouse: sdl3::mouse::MouseUtil = sdl.mouse();
+                    match keycode {
+                        Some(Keycode::Return) => {
+                            appcore.camera.movable = true;
+                            mouse.set_relative_mouse_mode(&renderer.window, true);
+                            sdl.video()?.text_input().stop(&renderer.window);
+                        }
+                        Some(Keycode::Escape) => {
+                            appcore.camera.movable = false;
+                            mouse.set_relative_mouse_mode(&renderer.window, false);
+                            sdl.video()?.text_input().start(&renderer.window);
+                            appui.search_window_open = false;
+                        }
+                        Some(Keycode::Slash) => {
+                            appcore.camera.movable = false;
+                            mouse.set_relative_mouse_mode(&renderer.window, false);
+                            sdl.video()?.text_input().start(&renderer.window);
+                            appui.search_window_open = true;
+                        }
+                        _ => (),
+                    };
                 }
-                _ => {}
-            }
+                _ => (),
+            };
         }
 
         renderer.render(&mut sdl, &resources, &mut appcore, &mut appui)?;

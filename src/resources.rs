@@ -20,15 +20,16 @@ impl ResourceManager {
     pub fn load(device: &Device, path: &'static str) -> Result<Self, Box<dyn std::error::Error>> {
         info!("Loading assets");
 
-        let copy_commands = device.acquire_command_buffer()?;
-        let copy_pass = device.begin_copy_pass(&copy_commands)?;
+        let copy_commands: CommandBuffer = device.acquire_command_buffer()?;
+        let copy_pass: CopyPass = device.begin_copy_pass(&copy_commands)?;
 
-        let star_texture = create_texture_from_image(device, "assets/star_pixel.png", &copy_pass)?;
+        let star_texture: Texture<'_> =
+            create_texture_from_image(device, "assets/star_pixel.png", &copy_pass)?;
 
         device.end_copy_pass(copy_pass);
         copy_commands.submit()?;
 
-        let mut textures = HashMap::new();
+        let mut textures: HashMap<&str, Texture<'_>> = HashMap::new();
 
         textures.insert("star.png", star_texture);
 
@@ -39,8 +40,7 @@ impl ResourceManager {
     }
 
     pub fn get_texture(&self, id: &'static str) -> &Texture<'static> {
-        let texture = self.textures.get(id);
-        return texture.unwrap();
+        self.textures.get(id).unwrap()
     }
 }
 
@@ -50,15 +50,16 @@ fn create_texture_from_image(
     image_path: impl AsRef<Path>,
     copy_pass: &CopyPass,
 ) -> Result<Texture<'static>, Box<dyn std::error::Error>> {
-    let io = IOStream::from_file(image_path, "r")?;
-    let mut image = io.load_png()?;
+    let io: IOStream<'_> = IOStream::from_file(image_path, "r")?;
+    let mut image: Surface<'_> = io.load_png()?;
 
-    let image_size = image.size();
-    let size_bytes = image.pixel_format().bytes_per_pixel() as u32 * image_size.0 * image_size.1;
+    let image_size: (u32, u32) = image.size();
+    let size_bytes: u32 =
+        image.pixel_format().bytes_per_pixel() as u32 * image_size.0 * image_size.1;
 
     info!("{}", image.pixel_format().is_alpha());
 
-    let texture = gpu.create_texture(
+    let texture: Texture<'_> = gpu.create_texture(
         TextureCreateInfo::new()
             .with_format(TextureFormat::R8g8b8a8Unorm)
             .with_type(TextureType::_2D)
@@ -69,14 +70,14 @@ fn create_texture_from_image(
             .with_usage(TextureUsage::SAMPLER),
     )?;
 
-    let transfer_buffer = gpu
+    let transfer_buffer: TransferBuffer = gpu
         .create_transfer_buffer()
         .with_size(size_bytes)
         .with_usage(TransferBufferUsage::UPLOAD)
         .build()?;
 
-    let mut buffer_mem = transfer_buffer.map::<u8>(gpu, false);
-    image.with_lock(|image_bytes| {
+    let mut buffer_mem: BufferMemMap<'_, u8> = transfer_buffer.map(gpu, false);
+    image.with_lock(|image_bytes: &[u8]| {
         buffer_mem.mem_mut().copy_from_slice(image_bytes);
     });
     buffer_mem.unmap();

@@ -195,19 +195,24 @@ pub struct CubeRenderer {
 impl CubeRenderer {
     pub fn load(device: &Device, window: &Window) -> Result<Self, Box<dyn std::error::Error>> {
         println!("meow");
-        let fs_source = include_bytes!("../../shaders/cube/*.frag.spv");
-        let vs_source = include_bytes!("../../shaders/cube/*.vert.spv");
-
-        let vs_shader = device
+        let vertex_shader: Shader = device
             .create_shader()
-            .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
+            .with_code(
+                ShaderFormat::SPIRV,
+                include_bytes!("../../shaders/cube/*.vert.spv"),
+                ShaderStage::Vertex,
+            )
             .with_entrypoint(c"main")
             .with_uniform_buffers(1)
             .build()?;
 
-        let fs_shader = device
+        let fragment_shader: Shader = device
             .create_shader()
-            .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
+            .with_code(
+                ShaderFormat::SPIRV,
+                include_bytes!("../../shaders/cube/*.frag.spv"),
+                ShaderStage::Fragment,
+            )
             .with_entrypoint(c"main")
             .with_samplers(1)
             .build()?;
@@ -215,12 +220,12 @@ impl CubeRenderer {
         // Create a pipeline, we specify that we want our target format in the swapchain
         // since we are rendering directly to the screen. However, we could specify a texture
         // buffer instead (e.g., for offscreen rendering).
-        let swapchain_format = device.get_swapchain_texture_format(&window);
-        let pipeline = device
+        let swapchain_format: TextureFormat = device.get_swapchain_texture_format(&window);
+        let pipeline: GraphicsPipeline = device
             .create_graphics_pipeline()
             .with_primitive_type(PrimitiveType::TriangleList)
-            .with_fragment_shader(&fs_shader)
-            .with_vertex_shader(&vs_shader)
+            .with_fragment_shader(&fragment_shader)
+            .with_vertex_shader(&vertex_shader)
             .with_vertex_input_state(
                 VertexInputState::new()
                     .with_vertex_buffer_descriptions(&[VertexBufferDescription::new()
@@ -265,32 +270,32 @@ impl CubeRenderer {
             .build()?;
 
         // The pipeline now holds copies of our shaders, so we can release them
-        drop(vs_shader);
-        drop(fs_shader);
+        drop(vertex_shader);
+        drop(fragment_shader);
 
         // Next, we create a transfer buffer that is large enough to hold either
         // our vertices or indices since we will be transferring both with it.
-        let vertices_len_bytes = std::mem::size_of_val(CUBE_VERTICES);
-        let indices_len_bytes = std::mem::size_of_val(CUBE_INDICES);
-        let transfer_buffer = device
+        let vertices_len_bytes: usize = std::mem::size_of_val(CUBE_VERTICES);
+        let indices_len_bytes: usize = std::mem::size_of_val(CUBE_INDICES);
+        let transfer_buffer: TransferBuffer = device
             .create_transfer_buffer()
             .with_size(vertices_len_bytes.max(indices_len_bytes) as u32)
             .with_usage(TransferBufferUsage::UPLOAD)
             .build()?;
 
         // We need to start a copy pass in order to transfer data to the GPU
-        let copy_commands = device.acquire_command_buffer()?;
-        let copy_pass = device.begin_copy_pass(&copy_commands)?;
+        let copy_commands: CommandBuffer = device.acquire_command_buffer()?;
+        let copy_pass: CopyPass = device.begin_copy_pass(&copy_commands)?;
 
         // Create GPU buffers to hold our vertices and indices and transfer data to them
-        let vertex_buffer = create_buffer_with_data(
+        let vertex_buffer: Buffer = create_buffer_with_data(
             &device,
             &transfer_buffer,
             &copy_pass,
             BufferUsageFlags::VERTEX,
             CUBE_VERTICES,
         )?;
-        let index_buffer = create_buffer_with_data(
+        let index_buffer: Buffer = create_buffer_with_data(
             &device,
             &transfer_buffer,
             &copy_pass,
@@ -309,10 +314,10 @@ impl CubeRenderer {
         device.end_copy_pass(copy_pass);
         copy_commands.submit()?;
 
-        let (width, height) = window.size();
+        let (width, height): (u32, u32) = window.size();
 
         // We'll need to allocate a texture buffer for our depth buffer for depth testing to work
-        let mut depth_texture = device.create_texture(
+        let mut depth_texture: Texture<'_> = device.create_texture(
             TextureCreateInfo::new()
                 .with_type(TextureType::_2D)
                 .with_width(width)
@@ -324,10 +329,10 @@ impl CubeRenderer {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        return Ok(Self {
+        Ok(Self {
             pipeline: pipeline,
             rotation: 45.0f32,
-        });
+        })
     }
 
     pub fn render(

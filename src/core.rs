@@ -38,15 +38,15 @@ impl Camera {
     }
 
     pub fn translate(&mut self, x: f32, y: f32, z: f32) {
-        let rotx = -self.orientation.y;
-        let roty = -self.orientation.z;
-        let rotz = -self.orientation.x;
+        let rotx: f32 = -self.orientation.y;
+        let roty: f32 = -self.orientation.z;
+        let rotz: f32 = -self.orientation.x;
 
-        let rotmatx = Basis3::<f32>::from_angle_x(Rad(rotx));
-        let rotmaty = Basis3::<f32>::from_angle_y(Rad(roty));
-        let rotmatz = Basis3::<f32>::from_angle_z(Rad(rotz));
+        let rotmatx: Basis3<f32> = Basis3::from_angle_x(Rad(rotx));
+        let rotmaty: Basis3<f32> = Basis3::from_angle_y(Rad(roty));
+        let rotmatz: Basis3<f32> = Basis3::from_angle_z(Rad(rotz));
 
-        let mut translation_unit = Vector3 {
+        let mut translation_unit: Vector3<f32> = Vector3 {
             x: x * self.move_speed,
             y: y * self.move_speed,
             z: z * self.move_speed,
@@ -60,33 +60,31 @@ impl Camera {
     }
 
     pub fn check_reload(&mut self) -> bool {
-        let mut reload = false;
+        let mut reload: bool = false;
 
-        let delta_pos = self.pos - self.last_reload_pos;
+        let delta_pos: Vector3<f32> = self.pos - self.last_reload_pos;
 
         if delta_pos.magnitude() > self.reload_distance {
             self.last_reload_pos = self.pos;
             reload = true;
-        }
+        };
 
         return reload;
     }
 
     pub fn get_projection_matrix(&self, w: f32, h: f32) -> PerspectiveFov<f32> {
-        let projection_matrix = PerspectiveFov {
+        PerspectiveFov {
             fovy: Rad(self.fov),
             aspect: w / h,
             near: 0.01,
             far: 1.1,
-        };
-
-        return projection_matrix;
+        }
     }
 }
 
 impl Default for Camera {
     fn default() -> Self {
-        return Camera {
+        Self {
             pos: Vector3::new(0.0, 0.0, 0.0),
             orientation: Vector3::new(0.0, 0.0, 0.0),
             sensitivity: 1.0,
@@ -96,7 +94,7 @@ impl Default for Camera {
             reload_distance: 0.1,
             last_reload_pos: Vector3::new(0.0, 0.0, 0.0),
             movable: true,
-        };
+        }
     }
 }
 
@@ -116,12 +114,7 @@ impl AppCore {
 
     pub fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         info!("Load app core...");
-        self.star_handler
-            .load(String::from("data/hygdata_v41.csv"))?;
+        self.star_handler.load("data/hygdata_v41.csv")?;
         Ok(())
-    }
-
-    pub fn get_star_handler(&self) -> &StarHandler {
-        return &self.star_handler;
     }
 }

@@ -20,30 +20,35 @@ impl<'a> StarRenderer<'a> {
         window: &Window,
         appcore: &AppCore,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let fs_source = include_bytes!("../../shaders/stars/stars.frag.spv");
-        let vs_source = include_bytes!("../../shaders/stars/stars.vert.spv");
-
-        let vs_shader = device
+        let vertex_shader: Shader = device
             .create_shader()
-            .with_code(ShaderFormat::SPIRV, vs_source, ShaderStage::Vertex)
+            .with_code(
+                ShaderFormat::SPIRV,
+                include_bytes!("../../shaders/stars/stars.vert.spv"),
+                ShaderStage::Vertex,
+            )
             .with_entrypoint(c"main")
             .with_storage_buffers(1)
             .with_uniform_buffers(1)
             .build()?;
 
-        let fs_shader = device
+        let fragment_shader: Shader = device
             .create_shader()
-            .with_code(ShaderFormat::SPIRV, fs_source, ShaderStage::Fragment)
+            .with_code(
+                ShaderFormat::SPIRV,
+                include_bytes!("../../shaders/stars/stars.frag.spv"),
+                ShaderStage::Fragment,
+            )
             .with_entrypoint(c"main")
             .with_samplers(1)
             .build()?;
 
-        let swapchain_format = device.get_swapchain_texture_format(&window);
+        let swapchain_format: TextureFormat = device.get_swapchain_texture_format(&window);
 
-        let pipeline = device
+        let pipeline: GraphicsPipeline = device
             .create_graphics_pipeline()
-            .with_fragment_shader(&fs_shader)
-            .with_vertex_shader(&vs_shader)
+            .with_fragment_shader(&fragment_shader)
+            .with_vertex_shader(&vertex_shader)
             .with_primitive_type(PrimitiveType::TriangleList)
             .with_fill_mode(FillMode::Fill)
             .with_depth_stencil_state(
@@ -71,10 +76,10 @@ impl<'a> StarRenderer<'a> {
             )
             .build()?;
 
-        drop(vs_shader);
-        drop(fs_shader);
+        drop(vertex_shader);
+        drop(fragment_shader);
 
-        let mut depth_stencil = device.create_texture(
+        let mut depth_stencil: Texture<'_> = device.create_texture(
             TextureCreateInfo::new()
                 .with_type(TextureType::_2D)
                 .with_width(window.size().0)
@@ -86,9 +91,9 @@ impl<'a> StarRenderer<'a> {
                 .with_usage(TextureUsage::SAMPLER | TextureUsage::DEPTH_STENCIL_TARGET),
         )?;
 
-        let range = appcore.camera.range;
+        let range: f32 = appcore.camera.range;
 
-        let (star_buffer, num_stars) = load_star_buffer(
+        let (star_buffer, num_stars): (Buffer, usize) = load_star_buffer(
             device,
             window,
             &appcore.star_handler,
@@ -96,13 +101,13 @@ impl<'a> StarRenderer<'a> {
             appcore.camera.pos,
         )?;
 
-        return Ok(Self {
+        Ok(Self {
             pipeline: pipeline,
             star_buffer: star_buffer,
             depth_stencil,
             num_stars: num_stars,
             range,
-        });
+        })
     }
 
     pub fn render(
@@ -123,18 +128,18 @@ impl<'a> StarRenderer<'a> {
             rotation: Vector3<f32>,
         }
 
-        let window_size = window.size();
-        let projection_matrix =
+        let window_size: (u32, u32) = window.size();
+        let projection_matrix: PerspectiveFov<f32> =
             // camera.get_projection_matrix(window_size.0 as f32, window_size.1 as f32);
             camera.get_projection_matrix(1920.0, 1200.0);
 
-        let uniform_data = UniformData {
+        let uniform_data: UniformData = UniformData {
             projection_matrix: Matrix4::from(projection_matrix),
             position: camera.pos,
             rotation: camera.orientation,
         };
 
-        let depth_target = DepthStencilTargetInfo::new()
+        let depth_target: DepthStencilTargetInfo = DepthStencilTargetInfo::new()
             .with_texture(&mut self.depth_stencil)
             .with_cycle(true)
             .with_clear_depth(1.0)
@@ -144,7 +149,7 @@ impl<'a> StarRenderer<'a> {
             .with_stencil_load_op(LoadOp::CLEAR)
             .with_stencil_store_op(StoreOp::STORE);
 
-        let render_pass = device
+        let render_pass: RenderPass = device
             // .begin_render_pass(&command_buffer, color_targets, Some(&depth_target))
             .begin_render_pass(&command_buffer, color_targets, None)
             .unwrap();
@@ -152,9 +157,9 @@ impl<'a> StarRenderer<'a> {
         render_pass.bind_graphics_pipeline(&self.pipeline);
         render_pass.bind_vertex_storage_buffers(0, &[self.star_buffer.clone()]);
 
-        let star_texture = resources.get_texture("star.png");
+        let star_texture: &Texture<'static> = resources.get_texture("star.png");
 
-        let texture_sampler = device.create_sampler(SamplerCreateInfo::new())?;
+        let texture_sampler: Sampler = device.create_sampler(SamplerCreateInfo::new())?;
 
         render_pass.bind_fragment_samplers(
             0,
@@ -195,8 +200,8 @@ fn load_star_buffer(
     range: f32,
     pos: Vector3<f32>,
 ) -> Result<(Buffer, usize), Box<dyn std::error::Error>> {
-    let stars = star_handler.get_nearby(range as f64, pos);
-    let num_stars = stars.len() + 32;
+    let stars: Vec<&Star> = star_handler.get_nearby(range as f64, pos);
+    let num_stars: usize = stars.len() + 32;
 
     let mut star_data: Vec<StarVertexData> = Vec::new();
 
@@ -204,18 +209,18 @@ fn load_star_buffer(
         star_data.push(StarVertexData::from(star));
     }
 
-    let buffer_size = (num_stars * size_of::<StarVertexData>()) as u32;
+    let buffer_size: u32 = (num_stars * size_of::<StarVertexData>()) as u32;
 
-    let upload = device
+    let upload: TransferBuffer = device
         .create_transfer_buffer()
         .with_size(buffer_size)
         .with_usage(TransferBufferUsage::UPLOAD)
         .build()?;
 
-    let copy_cmd = device.acquire_command_buffer()?;
-    let copy_pass = device.begin_copy_pass(&copy_cmd)?;
+    let copy_cmd: CommandBuffer = device.acquire_command_buffer()?;
+    let copy_pass: CopyPass = device.begin_copy_pass(&copy_cmd)?;
 
-    let star_buffer = create_buffer_with_data(
+    let star_buffer: Buffer = create_buffer_with_data(
         &device,
         &upload,
         &copy_pass,
@@ -228,7 +233,7 @@ fn load_star_buffer(
     device.end_copy_pass(copy_pass);
     copy_cmd.submit()?;
 
-    return Ok((star_buffer, num_stars));
+    Ok((star_buffer, num_stars))
 }
 
 // data to be passed to the shader.
@@ -242,13 +247,11 @@ struct StarVertexData {
 }
 
 impl From<&Star> for StarVertexData {
-    fn from(star: &Star) -> StarVertexData {
-        let position = [star.x as f32, star.y as f32, star.z as f32];
-
-        return StarVertexData {
-            position,
+    fn from(star: &Star) -> Self {
+        Self {
+            position: [star.x as f32, star.y as f32, star.z as f32],
             temperature: star.ci.unwrap_or(0.3),
             magnitude: star.absmag,
-        };
+        }
     }
 }
